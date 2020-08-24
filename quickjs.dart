@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'ffi/ffi.dart';
 
 final QSCode = r'''
@@ -49,12 +51,22 @@ function Utf8ArrayToStr(array) {
 
 // global.testAny.bad(2).then(()=>console.log(global.testAny.static_val))
 // console.log(typeof global.testAny.good());
-console.log(global.testCallback_1("2"));
+// console.log(global.testCallback_1("2"));
+console.log(global.testAdd(1,2,3,4));
 
 ''';
 
+testAdd(Pointer<JSContext> context, List<Pointer> args) async {
+  print(JS_Value.is_number(args[0]));
+  // await ttt();
+  var result = await JS_Value.newString(context, "fuck").value;
+  return result;
+}
+
 main() {
   var engine = JSEngine.start();
+
+  engine.createNewFunction("testAdd", testAdd);
 
   engine.evalScript(QSCode);
 

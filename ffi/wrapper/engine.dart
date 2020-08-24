@@ -1,24 +1,32 @@
-import 'dart:convert';
 import 'dart:ffi';
-
-import 'package:ffi/ffi.dart';
-
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/util.dart';
 import '../ffi.dart';
 
+Map<int, Dart_Handler> dart_handler_map;
+
 class JSEngine {
+  /// runtime pointer
   Pointer<JSRuntime> _rt;
+
+  /// context pointer
   Pointer<JSContext> _ctx;
+
+  /// context getter
   Pointer<JSContext> get context => _ctx;
+
+  /// global object getter
   JS_Value get global => _globalObject();
+
+  int _next_handler_Id = 0;
 
   JSEngine.start() {
     _rt = newRuntime();
     _ctx = newContext(_rt);
-    init();
+    initDartAPI();
     setGlobalObject("global");
+    registerDartFP();
   }
 
   JSEngine.stop(JSEngine engine) {
@@ -30,13 +38,21 @@ class JSEngine {
     freeRuntime(_rt);
   }
 
-  void init() {
+  /// Dart Api for Dynamic link, should place before function call
+  void initDartAPI() {
     final initializeApi =
         dylib.lookupFunction<IntPtr Function(Pointer<Void>), int Function(Pointer<Void>)>(
             "Dart_InitializeApiDL");
     if (initializeApi(NativeApi.initializeApiDLData) != 0) {
       throw "Failed to initialize Dart API";
     }
+  }
+
+  void registerDartFP() {
+    final dartCallbackPointer = Pointer.fromFunction<
+        Pointer Function(Pointer<JSContext> ctx, Pointer this_val, Int32 argc, Pointer<Uint64> argv,
+            Pointer func_data)>(callBackWrapper);
+    registerDartCallbackFP(dartCallbackPointer);
   }
 
   void setGlobalObject(String globalString) {
@@ -46,6 +62,94 @@ class JSEngine {
 
   void dispose() {
     stop();
+  }
+
+  /**
+   * Convert a Javascript function into a QuickJS function value.
+   * See [[VmFunctionImplementation]] for more details.
+   *
+   * A [[VmFunctionImplementation]] should not free its arguments or its retun
+   * value. A VmFunctionImplementation should also not retain any references to
+   * its veturn value.
+   */
+  createNewFunction(String func_name, Dart_Handler handler) {
+    // const fnId = ++this.fnNextId
+    // this.fnMap.set(fnId, fn)
+
+    final int handler_id = ++_next_handler_Id;
+    if (dart_handler_map == null) {
+      dart_handler_map = new Map();
+    }
+    dart_handler_map.putIfAbsent(handler_id, () => handler);
+
+    installDartHook(_ctx, global.value, Utf8Fix.toUtf8(func_name), handler_id);
+
+    // const fnIdHandle = this.newNumber(fnId)
+    // const funcHandle = this.heapValueHandle(
+    //   this.ffi.QTS_NewFunction(this.ctx.value, fnIdHandle.value, name)
+    // )
+
+    // // We need to free fnIdHandle's pointer, but not the JSValue, which is retained inside
+    // // QuickJS for late.
+    // this.module._free(fnIdHandle.value)
+
+    // return funcHandle
+  }
+
+  static Pointer callBackWrapper(
+      Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer<Uint64> argv, Pointer func_data) {
+    final int handler_id = ToInt64(ctx, func_data);
+    final Function handler = dart_handler_map[handler_id];
+
+    if (handler == null) {
+      throw 'QuickJS VM had no callback with id ${handler_id}';
+    }
+
+    List<Pointer> args =
+        argc > 1 ? List.generate(argc, (index) => argv.elementAt(2 * index)) : [argv];
+
+    var result = handler(ctx, args);
+
+    if (result.runtimeType.toString() == "Future<dynamic>") {
+      return atomToValue(ctx, 194);
+    }
+    return result;
+
+    // const thisHandle = new WeakLifetime(this_ptr, this.copyJSValue, this.freeJSValue, this)
+    // const argHandles = new Array<QuickJSHandle>(argc)
+    // for (let i = 0; i < argc; i++) {
+    //   const ptr = this.ffi.QTS_ArgvGetJSValueConstPointer(argv, i)
+    //   argHandles[i] = new WeakLifetime(ptr, this.copyJSValue, this.freeJSValue, this)
+    // }
+
+    // let ownedResultPtr = 0 as JSValuePointer
+    // try {
+    //   let result = fn.apply(thisHandle, argHandles)
+    //   if (result) {
+    //     if ('error' in result && result.error) {
+    //       throw result.error
+    //     }
+    //     const handle = result instanceof Lifetime ? result : result.value
+    //     ownedResultPtr = this.ffi.QTS_DupValuePointer(this.ctx.value, handle.value)
+    //     handle.dispose()
+    //   }
+    // } catch (error) {
+    //   ownedResultPtr = this.errorToHandle(error).consume(errorHandle =>
+    //     this.ffi.QTS_Throw(this.ctx.value, errorHandle.value)
+    //   )
+    // }
+
+    // // Free the arguments so they can't be retained and re-used after we return.
+    // if (thisHandle.alive) {
+    //   thisHandle.dispose()
+    // }
+    // for (const argHandle of argHandles) {
+    //   if (argHandle.alive) {
+    //     argHandle.dispose()
+    //   }
+    // }
+
+    // return ownedResultPtr as JSValuePointer
   }
 
   JS_Value callFunction(JS_Value js_func_obj, JS_Value js_obj, int arg_length, JS_Value arg_value) {

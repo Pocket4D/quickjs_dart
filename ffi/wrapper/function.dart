@@ -61,3 +61,5 @@ class Dart_CallBack {
     callbackFunc(ctx, this_val, args.length, args);
   }
 }
+
+typedef Dart_Handler(Pointer<JSContext> context, List<Pointer> args);

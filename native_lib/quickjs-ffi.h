@@ -147,7 +147,20 @@ DART_EXTERN_C void (*Dart_ExitScope_DL)();
 typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data);
 // global one time release
 dart_handle_func dart_callback_= NULL;
-DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, JSValue* fun_data);
+DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
+
+
+typedef int dart_interrupt_func(JSRuntime *rt);
+int interrupt_handler(JSRuntime *rt, void *_unused);
+void setInterruptCallback(dart_interrupt_func *cb);
+void runtimeEnableInterruptHandler(JSRuntime *rt);
+void runtimeDisableInterruptHandler(JSRuntime *rt);
+
+
+DART_EXTERN_C JSValue *executePendingJob(JSRuntime *rt, int maxJobsToExecute);
+DART_EXTERN_C int isJobPending(JSRuntime *rt);
+
+DART_EXTERN_C JSValue *resolveException(JSContext *ctx, JSValue *maybe_exception);
 
 #endif /* RUNTIME_INCLUDE_DART_API_DL_H_ */ /* NOLINT */
 
@@ -337,11 +350,11 @@ DART_EXTERN_C int toInt32(JSContext *ctx, JSValueConst *val);
 
 DART_EXTERN_C int toUint32(JSContext *ctx, uint32_t *pres, JSValueConst *val);
 
-DART_EXTERN_C int toInt64(JSContext *ctx, int64_t *pres, JSValueConst *val);
+DART_EXTERN_C int toInt64(JSContext *ctx, JSValueConst *val);
 
 DART_EXTERN_C int toIndex(JSContext *ctx, uint64_t *plen, JSValueConst *val);
 
-DART_EXTERN_C int toFloat64(JSContext *ctx, double *pres, JSValueConst *val);
+DART_EXTERN_C double toFloat64(JSContext *ctx, JSValueConst *val);
 
 DART_EXTERN_C int toBigInt64(JSContext *ctx, int64_t *pres, JSValueConst *val);
 
@@ -408,11 +421,13 @@ DART_EXTERN_C JSAtom *valueToAtom(JSContext *ctx, JSValueConst *val);
 
 DART_EXTERN_C const char *valueToAtomString(JSContext *ctx, JSValueConst *val);
 
-DART_EXTERN_C JSValue *atomToValue(JSContext *ctx, JSAtom *atom);
+DART_EXTERN_C JSValue *atomToValue(JSContext *ctx, JSAtom atom);
 
 DART_EXTERN_C JSValue *atomToString(JSContext *ctx, uint32_t atom);
 
 DART_EXTERN_C int oper_typeof(JSContext *ctx, JSValue *op1);
+
+DART_EXTERN_C const char *dump(JSContext *ctx, JSValueConst *obj);
 
 #ifdef __cplusplus
 } /* extern "C" { */

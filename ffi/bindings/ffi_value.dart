@@ -94,9 +94,9 @@ final int Function(Pointer<JSContext> ctx, Pointer<Uint32> pres, Pointer value) 
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Uint32>, Pointer)>>(
         'toUInt32')
     .asFunction();
-// int toInt64(JSContext *ctx, int64_t *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) ToInt64 = dylib
-    .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Int64>, Pointer)>>('toInt64')
+// int toInt64(JSContext *ctx, JSValueConst val);
+final int Function(Pointer<JSContext> ctx, Pointer value) ToInt64 = dylib
+    .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer value)>>('toInt64')
     .asFunction();
 // int toIndex(JSContext *ctx, uint64_t *plen, JSValueConst val);
 final int Function(Pointer<JSContext> ctx, Pointer<Uint64> pres, Pointer value) ToIndex = dylib
@@ -235,6 +235,10 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> str) newAtomStri
 
 final Pointer Function(Pointer<JSContext> context, int val) atomToString = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Uint32)>>('atomToString')
+    .asFunction();
+
+final Pointer Function(Pointer<JSContext> context, int val) atomToValue = dylib
+    .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Uint32)>>('atomToValue')
     .asFunction();
 
 // JSValue newObjectProtoClass(JSContext *ctx, JSValueConst proto, JSClassID class_id);
