@@ -4,7 +4,7 @@
 2. clang
 3. llvm(optional)
 
-# build manual
+# build manual(local machine only, not optimized for linux)
 
 1. build quickjs lib
    ```bash
