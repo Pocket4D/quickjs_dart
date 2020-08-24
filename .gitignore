@@ -1,0 +1,9 @@
+# dart
+.dart_tool
+.packages
+
+# make files
+/native_lib/CMakeFiles/
+/native_lib/*.cmake
+/native_lib/Makefile
+/native_lib/CMakeCache.txt
