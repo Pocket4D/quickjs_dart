@@ -1,5 +1,6 @@
 import 'dart:ffi';
 import 'dart:isolate';
+
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/util.dart';
@@ -7,9 +8,10 @@ import '../bindings/ffi_value.dart';
 import 'value.dart';
 import 'function.dart';
 
-Map<int, Dart_Handler> dart_handler_map;
+Map<int, Dart_Sync_Handler> dart_handler_map;
+Map<int, Dart_Void_Handler> dart_void_handler_map;
 
-class JSEngine {
+class JSEngine extends Object {
   /// runtime pointer
   Pointer<JSRuntime> _rt;
 
@@ -35,7 +37,7 @@ class JSEngine {
     initDartAPI();
     setGlobalObject("global");
     registerDartFP();
-    registerDartVoidFP();
+    // registerDartVoidFP();
   }
 
   JSEngine.stop(JSEngine engine) {
@@ -83,14 +85,14 @@ class JSEngine {
   /**
    * Convert a Javascript function into a QuickJS function value.
    */
-  createNewFunction(String func_name, Dart_Handler handler) {
+  createNewFunction(String func_name, Dart_Sync_Handler handler, {JS_Value to_val}) {
     final int handler_id = ++_next_handler_Id;
     if (dart_handler_map == null) {
       dart_handler_map = new Map();
     }
     dart_handler_map.putIfAbsent(handler_id, () => handler);
 
-    installDartHook(_ctx, global.value, Utf8Fix.toUtf8(func_name), handler_id);
+    installDartHook(_ctx, to_val?.value ?? global.value, Utf8Fix.toUtf8(func_name), handler_id);
   }
 
   createNewAsyncFunction(String func_name) {
@@ -100,7 +102,7 @@ class JSEngine {
   static Pointer callBackWrapper(
       Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer<Uint64> argv, Pointer func_data) {
     final int handler_id = ToInt64(ctx, func_data);
-    final Dart_Handler handler = dart_handler_map[handler_id];
+    final Dart_Sync_Handler handler = dart_handler_map[handler_id];
 
     if (handler == null) {
       throw 'QuickJS VM had no callback with id ${handler_id}';
@@ -109,54 +111,19 @@ class JSEngine {
     List<Pointer> args =
         argc > 1 ? List.generate(argc, (index) => argv.elementAt(2 * index)) : [argv];
 
-    var result = handler(ctx, this_val, args, handler_id, this_val);
+    var result = handler(ctx, this_val, args);
 
     if (result is Future<dynamic>) {
-      return atomToValue(ctx, 194);
+      throw "Future Cannot be callback at this point";
+      // return atomToValue(ctx, 194);
     }
     return result;
-
-    // const thisHandle = new WeakLifetime(this_ptr, this.copyJSValue, this.freeJSValue, this)
-    // const argHandles = new Array<QuickJSHandle>(argc)
-    // for (let i = 0; i < argc; i++) {
-    //   const ptr = this.ffi.QTS_ArgvGetJSValueConstPointer(argv, i)
-    //   argHandles[i] = new WeakLifetime(ptr, this.copyJSValue, this.freeJSValue, this)
-    // }
-
-    // let ownedResultPtr = 0 as JSValuePointer
-    // try {
-    //   let result = fn.apply(thisHandle, argHandles)
-    //   if (result) {
-    //     if ('error' in result && result.error) {
-    //       throw result.error
-    //     }
-    //     const handle = result instanceof Lifetime ? result : result.value
-    //     ownedResultPtr = this.ffi.QTS_DupValuePointer(this.ctx.value, handle.value)
-    //     handle.dispose()
-    //   }
-    // } catch (error) {
-    //   ownedResultPtr = this.errorToHandle(error).consume(errorHandle =>
-    //     this.ffi.QTS_Throw(this.ctx.value, errorHandle.value)
-    //   )
-    // }
-
-    // // Free the arguments so they can't be retained and re-used after we return.
-    // if (thisHandle.alive) {
-    //   thisHandle.dispose()
-    // }
-    // for (const argHandle of argHandles) {
-    //   if (argHandle.alive) {
-    //     argHandle.dispose()
-    //   }
-    // }
-
-    // return ownedResultPtr as JSValuePointer
   }
 
   static void voidCallBackWrapper(Pointer<JSContext> ctx, Pointer this_val, int argc,
       Pointer<Uint64> argv, Pointer func_data, Pointer result_ptr) {
     final int handler_id = ToInt64(ctx, func_data);
-    final Dart_Handler handler = dart_handler_map[handler_id];
+    final Dart_Void_Handler handler = dart_void_handler_map[handler_id];
     if (handler == null) {
       throw 'QuickJS VM had no callback with id ${handler_id}';
     }
@@ -190,6 +157,10 @@ class JSEngine {
   JS_Value evalScript(String js_string) {
     var ptr = eval(context, Utf8Fix.toUtf8(js_string), js_string.length);
     return JS_Value(context, ptr);
+  }
+
+  void js_print(JS_Value val) {
+    global.getProperty("console").getProperty("log").call_js([val]);
   }
 
   JS_Value _globalObject() {
@@ -253,4 +224,111 @@ class JSEngine {
   JS_Value newArray() {
     return JS_Value.newArray(_ctx);
   }
+
+  JS_Value newAtom(String val) {
+    return JS_Value.newAtom(_ctx, val);
+  }
+
+  JS_Value createJSArray(List<dynamic> dart_list) {
+    var js_array = JS_Value.newArray(_ctx);
+    for (int i = 0; i < dart_list.length; ++i) {
+      var value = dart_list[i];
+      String _type = typeCheckHelper(value);
+      switch (_type) {
+        case "int":
+          js_array.setProperty(i, JS_Value.newInt32(_ctx, value));
+          break;
+        case "String":
+          js_array.setProperty(i, JS_Value.newString(_ctx, value));
+          break;
+        case "bool":
+          js_array.setProperty(i, JS_Value.newBool(_ctx, value));
+          break;
+        case "List":
+          // create array;
+          var subList = createJSArray((value as List<dynamic>));
+          js_array.setProperty(i, subList);
+          break;
+        case "Map":
+          // loop this function
+          var subMap = createJSObject((value as Map<String, dynamic>));
+          js_array.setProperty(i, subMap);
+          break;
+        case "Dart_Sync_Handler":
+          // loop this function
+          // js_obj.setPropertyValue(key, JS_Value.newArray(_ctx, value), default_flags);
+          // createNewFunction(i, (value as Dart_Sync_Handler), to_val: js_array);
+          throw "${value.runtimeType} is not supported";
+          break;
+        case "Not_Support":
+          throw "${value.runtimeType} is not supported";
+          break;
+        default:
+      }
+    }
+    return js_array;
+  }
+
+  JS_Value createJSObject(Map<String, dynamic> dart_map) {
+    var js_obj = JS_Value.newObject(_ctx);
+
+    dart_map.forEach((key, value) {
+      String _type = typeCheckHelper(value);
+      switch (_type) {
+        case "int":
+          js_obj.setProperty(key, JS_Value.newInt32(_ctx, value));
+          break;
+        case "String":
+          js_obj.setProperty(key, JS_Value.newString(_ctx, value));
+          break;
+        case "bool":
+          js_obj.setProperty(key, JS_Value.newBool(_ctx, value));
+          break;
+        case "List":
+          // create array;
+          var subList = createJSArray((value as List<dynamic>));
+          js_obj.setProperty(key, subList);
+          // js_obj.setPropertyValue(key, JS_Value.newArray(_ctx, value), default_flags);
+          break;
+        case "Map":
+          // loop this function
+          var subMap = createJSObject((value as Map<String, dynamic>));
+          js_obj.setProperty(key, subMap);
+          // js_obj.setPropertyValue(key, JS_Value.newArray(_ctx, value), default_flags);
+          break;
+        case "Dart_Sync_Handler":
+          // loop this function
+          createNewFunction(key, (value as Dart_Sync_Handler), to_val: js_obj);
+          // throw "${value.runtimeType} is not supported";
+          break;
+        case "Not_Support":
+          throw "${value.runtimeType} is not supported";
+          break;
+        default:
+      }
+    });
+    return js_obj;
+  }
+}
+
+String typeCheckHelper(dynamic value) {
+  if (value is int) {
+    return 'int';
+  }
+  if (value is String) {
+    return "String";
+  }
+  if (value is bool) {
+    return "bool";
+  }
+  if (value is List) {
+    return "List";
+  }
+  if (value is Map) {
+    return "Map";
+  }
+  if (value is Dart_Sync_Handler) {
+    return "Dart_Sync_Handler";
+  }
+  return "Not_Support";
 }

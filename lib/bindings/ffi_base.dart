@@ -399,9 +399,9 @@ final registerDartVoidCallbackFP = dylib
 //     .asFunction();
 
 // // DART_EXPORT typedef std::function<void()> Work;
-// class Work extends Struct {}
+class Work extends Struct {}
 
-// // DART_EXTERN_C void ExecuteCallback(Work *work_ptr)
+// DART_EXTERN_C void ExecuteCallback(Work *work_ptr)
 
-// final ExecuteCallback = dylib
-//     .lookupFunction<Void Function(Pointer<Work>), void Function(Pointer<Work>)>('ExecuteCallback');
+final ExecuteCallback = dylib
+    .lookupFunction<Void Function(Pointer<Work>), void Function(Pointer<Work>)>('ExecuteCallback');

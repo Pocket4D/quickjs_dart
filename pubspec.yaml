@@ -1,4 +1,4 @@
-name: dart_quickjs_ffi
+name: quickjs_dart
 description: A super simple example of calling C code from Dart with FFI
 
 environment:

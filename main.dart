@@ -1,5 +1,5 @@
 import 'dart:ffi';
-import 'package:dart_quickjs_ffi/core.dart';
+import 'package:quickjs_dart/core.dart';
 
 final QSCode = r'''
 
@@ -7,16 +7,16 @@ global.testAny={
   static_val:2,
   good:(buffer1,buffer2)=>{
       let a = Array.from(new Uint8Array(buffer1));
-      console.log('buffer1: ',Utf8ArrayToStr(a));
+      console.log('js good buffer1: ',Utf8ArrayToStr(a));
       let b = Array.from(new Uint8Array(buffer2));
-      console.log('buffer2: ',Utf8ArrayToStr(b));
+      console.log('js good buffer2: ',Utf8ArrayToStr(b));
   },
   bad: async (val)=>{
     global.testAny.static_val= global.testAny.static_val+ val;
   },
   twoParams:(val1,val2)=>{
-    console.log(val1);
-    console.log(val2);
+    console.log(`js twoParams val1  :${val1}`);
+    console.log(`js twoParams val2 :${val2}`);
   }
 }
 
@@ -58,19 +58,18 @@ function Utf8ArrayToStr(array) {
 // console.log(typeof global.testAny.good());
 // console.log(global.testCallback_1("2"));
 // console.log(global.testAdd(1));
-// console.log(`js result testAdd : ${global.testAdd(1)}`);
+// console.log(`js testAdd : ${global.testAdd(1)}`);
 // console.log(global.testAsyncAdd(1));
-global.testAsyncAdd(1).then((val)=>console.log(`js result testAsyncAdd : ${val}`));
+global.testAsyncAdd(1).then((val)=>console.log(`js testAsyncAdd : ${val}`));
 // console.log(global.testAsync(1))
 
 ''';
 
-testAdd(Pointer<JSContext> context, Pointer this_val, List<Pointer> args, int handler_id) {
+testAdd(Pointer<JSContext> context, Pointer this_val, List<Pointer> args) {
   return JS_Value.newString(context, "lll result").value;
 }
 
-testAsyncAdd(Pointer<JSContext> context, Pointer this_val, List<Pointer> args, int handler_id,
-    Pointer result_ptr) {
+testAsyncAdd(Pointer<JSContext> context, Pointer this_val, List<Pointer> args) {
   var str = "hello promise";
   var result = r"""function createPromiseResult(result){
         return Promise.resolve(result);
@@ -83,28 +82,26 @@ testAsyncAdd(Pointer<JSContext> context, Pointer this_val, List<Pointer> args, i
 
   var promise_result = promise_value.call_js([JS_Value.newString(context, str)]);
   var this_val_2 = JS_Value(context, getGlobalObject(context)).getProperty("testAny");
-
-  setPropertyInternal(context, this_val_2.value, newAtom(context, Utf8Fix.toUtf8("static_val")),
-      JS_Value.newInt32(context, 888).value, JS_Flags.JS_PROP_C_W_E);
-
+  this_val_2.setPropertyValue(
+      "static_val", JS_Value.newInt32(context, 888), JS_Flags.JS_PROP_C_W_E);
   print("this_val_2 is ${this_val_2.getProperty("static_val").toDartString()}");
 
-  jsvalue_copy(result_ptr, promise_result.value);
-
+  return promise_result.value;
   // return promise;
 }
 
 main() async {
   var engine = JSEngine.start();
 
-  // engine.createNewFunction("testAdd", testAdd);
+  engine.createNewFunction("testAdd", testAdd);
   engine.createNewFunction("testAsyncAdd", testAsyncAdd);
 
   engine.evalScript(QSCode);
 
   test_call_js(engine);
-
   // engine.evalScript("global.testAdd(2).then(console.log)");
+  // Function a = () {};
+  // print(testAdd is Dart_Sync_Handler);
 
   JSEngine.stop(engine);
 }
@@ -113,12 +110,31 @@ test_call_js(JSEngine engine) {
   /// get global object with `testAny`;
   var testAny = engine.global.getProperty("testAny");
 
+  // print(testAny.value);
+
   /// get sub-object from `testAny`
   var good = testAny.getProperty("good");
 
   var twoParams = testAny.getProperty("twoParams");
 
   var bad = testAny.getProperty("bad");
+
+  var jsObj = engine.createJSObject({
+    "number": 1,
+    "string": "shit",
+    "bool": true,
+    "array": [
+      1,
+      2,
+      3,
+      [4, 5],
+      {
+        "inner": [6, 7]
+      }
+    ],
+    "map": {"1": 2},
+    "aaa": testAdd
+  });
 
   /// construct a params to send
   var sss = [

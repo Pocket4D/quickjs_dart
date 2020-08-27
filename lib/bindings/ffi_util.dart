@@ -64,6 +64,16 @@ final Pointer Function(Pointer<JSContext> context, Pointer this_obj, Pointer<Utf
         )>>('getPropertyStr')
         .asFunction();
 
+// DART_EXTERN_C void setProp(JSContext *ctx, JSValueConst *this_val, JSValueConst *prop_name, JSValueConst *prop_value,int flags);
+final void Function(Pointer<JSContext> context, Pointer this_obj, Pointer prop_name,
+        Pointer prop_value, int flags) setProp =
+    dylib
+        .lookup<
+            NativeFunction<
+                Void Function(Pointer<JSContext>, Pointer this_obj, Pointer prop_name,
+                    Pointer prop_value, Int32 flags)>>('setProp')
+        .asFunction();
+
 // extractPointer
 final Pointer Function(Pointer value) extractPointer = dylib
     .lookup<

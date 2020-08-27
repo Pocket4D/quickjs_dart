@@ -1,19 +1,21 @@
 import 'dart:convert';
 import 'dart:ffi';
-
 import 'package:ffi/ffi.dart';
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/ffi_value.dart';
 import '../bindings/util.dart';
+import '../bindings/ffi_constant.dart';
+import '../core.dart';
 import 'error.dart';
 import 'util.dart';
 
-class JS_Value {
+class JS_Value extends Object {
   Pointer _ptr;
   Pointer _ctx;
 
+  Pointer get context => _ctx;
   int get address => _ptr.address;
   Pointer get value => _ptr;
   int get value_tag => GetValueTag(_ptr);
@@ -28,6 +30,31 @@ class JS_Value {
 
   void setPropertyString(String propertyName, JS_Value property) {
     setPropertyStr(_ctx, _ptr, Utf8Fix.toUtf8(propertyName), property.value);
+  }
+
+  /// set property of js object, eg we have a js_obj,
+  ///
+  /// ```dart
+  /// // say we have a js_obj existed
+  /// js_obj.setPropertyValue("someProp",JS_Value.newInt32(js_obj.context,1),JS_Flags.JS_PROP_C_W_E);
+  /// ```
+  /// then we have the object with
+  /// ```javascript
+  /// {someProp:1}
+  /// ```
+  void setPropertyValue(String propertyName, JS_Value value, int flags) {
+    setPropertyInternal(
+        _ctx, _ptr, newAtom(_ctx, Utf8Fix.toUtf8(propertyName)), value.value, flags);
+  }
+
+  void setProperty(dynamic prop_name, JS_Value value, {int flags}) {
+    JS_Value _prop_name;
+    if (prop_name is int) {
+      _prop_name = JS_Value.newInt32(_ctx, prop_name);
+    } else {
+      _prop_name = JS_Value.newString(_ctx, prop_name.toString());
+    }
+    setProp(_ctx, _ptr, _prop_name.value, value.value, flags ?? JS_Flags.JS_PROP_THROW);
   }
 
   String _getValueType() {
@@ -147,6 +174,10 @@ class JS_Value {
 
   JS_Value.newString(this._ctx, String val) {
     this._ptr = newString(_ctx, Utf8Fix.toUtf8(val));
+  }
+
+  JS_Value.newAtom(this._ctx, String val) {
+    this._ptr = newAtom(_ctx, Utf8Fix.toUtf8(val));
   }
 
   JS_Value.newAtomString(this._ctx, String val) {
@@ -372,5 +403,13 @@ class JS_Value {
     } catch (e) {
       throw e;
     }
+  }
+
+  js_print() {
+    JS_Value(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log").call_js([this]);
+  }
+
+  void dispose() {
+    free();
   }
 }

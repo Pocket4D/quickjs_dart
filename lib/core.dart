@@ -1,4 +1,4 @@
-library dart_quickjs_ffi;
+library quickjs_dart;
 
 export 'bindings/ffi_base.dart';
 export 'bindings/ffi_value.dart';
