@@ -7,6 +7,7 @@ import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/ffi_value.dart';
 import '../bindings/util.dart';
+import 'error.dart';
 import 'util.dart';
 
 class JS_Value {
@@ -33,24 +34,70 @@ class JS_Value {
     return to_string(_ctx, atomToString(_ctx, oper_typeof(_ctx, _ptr)));
   }
 
-  JS_Value call_js(Object params) {
+  JS_Value call_js(List<JS_Value> params) {
     try {
-      assert(!isFunction());
-      // translate params to List<int>, should be encodable;
-      List<int> params_int_list = toArray(jsonEncode(params));
-      // allocate with json string
-      final Pointer<Uint8> pointer = allocate<Uint8>(count: params_int_list.length);
-      // set pointer value to array value
-      for (int i = 0; i < params_int_list.length; ++i) {
-        pointer[i] = params_int_list[i];
+      if (!isFunction()) {
+        throw Error();
       }
-      // call js object with params
-      JS_Value argv = JS_Value(_ctx, newArrayBufferCopy(_ctx, pointer, params_int_list.length));
-      JS_Value callResult = JS_Value(_ctx, call(_ctx, _ptr, newNull(_ctx), 1, argv.value));
+      List<int> address_array = params.map<int>((element) {
+        return element.address;
+      }).toList();
+
+      final _data = allocate<Pointer<Pointer>>(count: address_array.length);
+
+      for (int i = 0; i < address_array.length; ++i) {
+        _data[i] = Pointer.fromAddress(address_array[i]);
+      }
+
+      JS_Value callResult =
+          JS_Value(_ctx, dart_call_js(_ctx, _ptr, newNull(_ctx), address_array.length, _data));
+
+      return callResult;
+    } catch (e) {
+      throw QuickJSError.typeError("not Function").throwError();
+    }
+  }
+
+  List<JS_Value> _toUint8Array_params(List<Object> params_to_encode) {
+    try {
+      if (!isFunction()) {
+        throw Error();
+      }
+      List<JS_Value> argvs = List(params_to_encode.length);
+      for (int i = 0; i < params_to_encode.length; ++i) {
+        var params = params_to_encode[i];
+        List<int> params_int_list = toArray(jsonEncode(params));
+
+        // allocate with json string
+        final Pointer<Uint8> pointer = allocate<Uint8>(count: params_int_list.length);
+
+        // set pointer value to array value
+        for (int j = 0; j < params_int_list.length; ++j) {
+          pointer[j] = params_int_list[j];
+        }
+        var js_array_buf = newArrayBufferCopy(_ctx, pointer, params_int_list.length);
+        // call js object with params
+        JS_Value argv = JS_Value(_ctx, js_array_buf);
+        argvs[i] = argv;
+      }
+      return argvs;
+    } catch (e) {
+      throw QuickJSError.typeError("not Function").throwError();
+    }
+  }
+
+  JS_Value call_js_encode(List<Object> params) {
+    try {
+      if (!isFunction()) {
+        throw Error();
+      }
+      List<JS_Value> argvs = _toUint8Array_params(params);
+
+      JS_Value callResult = call_js(argvs);
       // pointer is unsafe allocate in dart heap, have to free manually.
       return callResult;
     } catch (e) {
-      throw e;
+      throw QuickJSError.typeError("not Function").throwError();
     }
   }
 
@@ -187,11 +234,33 @@ class JS_Value {
   }
 
   static Pointer to_jsString(Pointer<JSContext> ctx, Pointer val) {
-    return ToString(ctx, val);
+    try {
+      if (JS_Value(ctx, val).value_type == "unknown") {
+        throw Error();
+      }
+      return ToString(ctx, val);
+    } catch (e) {
+      throw QuickJSError.typeError("unknown").throwError();
+    }
   }
 
   static String to_string(Pointer<JSContext> ctx, Pointer val) {
-    return Utf8Fix.fromUtf8(ToCString(ctx, val));
+    try {
+      return Utf8Fix.fromUtf8(ToCString(ctx, val));
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  static String to_JSONString(Pointer<JSContext> ctx, Pointer val) {
+    try {
+      if (JS_Value(ctx, val).value_type == "unknown") {
+        throw Error();
+      }
+      return JS_Value.to_string(ctx, JSONStringify(ctx, val));
+    } catch (e) {
+      throw QuickJSError.typeError("unknown").throwError();
+    }
   }
 
   /// determine if value is `NaN`
@@ -274,18 +343,34 @@ class JS_Value {
   }
 
   Pointer toJSString() {
-    return to_jsString(_ctx, _ptr);
+    try {
+      return to_jsString(_ctx, _ptr);
+    } catch (e) {
+      throw e;
+    }
   }
 
   String toDartString() {
-    return to_string(_ctx, _ptr);
+    try {
+      return to_string(_ctx, _ptr);
+    } catch (e) {
+      throw e;
+    }
   }
 
   void free() {
-    return free_value(_ctx, _ptr);
+    free_value(_ctx, _ptr);
   }
 
   Pointer copy() {
     return DupValue(_ctx, _ptr);
+  }
+
+  String toJSONString() {
+    try {
+      return to_JSONString(_ctx, _ptr);
+    } catch (e) {
+      throw e;
+    }
   }
 }

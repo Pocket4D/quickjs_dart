@@ -1,8 +1,11 @@
 import 'dart:ffi';
+import 'dart:isolate';
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/util.dart';
-import '../ffi.dart';
+import '../bindings/ffi_value.dart';
+import 'value.dart';
+import 'function.dart';
 
 Map<int, Dart_Handler> dart_handler_map;
 
@@ -21,12 +24,18 @@ class JSEngine {
 
   int _next_handler_Id = 0;
 
+  static ReceivePort cRequests = ReceivePort()
+    ..listen((message) {
+      print(message);
+    });
+
   JSEngine.start() {
     _rt = newRuntime();
     _ctx = newContext(_rt);
     initDartAPI();
     setGlobalObject("global");
     registerDartFP();
+    registerDartVoidFP();
   }
 
   JSEngine.stop(JSEngine engine) {
@@ -55,6 +64,13 @@ class JSEngine {
     registerDartCallbackFP(dartCallbackPointer);
   }
 
+  void registerDartVoidFP() {
+    final dartVoidCallbackPointer = Pointer.fromFunction<
+        Void Function(Pointer<JSContext> ctx, Pointer this_val, Int32 argc, Pointer<Uint64> argv,
+            Pointer func_data, Pointer result)>(voidCallBackWrapper);
+    registerDartVoidCallbackFP(dartVoidCallbackPointer);
+  }
+
   void setGlobalObject(String globalString) {
     var globalObj = _globalObject();
     globalObj.setPropertyString(globalString, globalObj);
@@ -66,16 +82,8 @@ class JSEngine {
 
   /**
    * Convert a Javascript function into a QuickJS function value.
-   * See [[VmFunctionImplementation]] for more details.
-   *
-   * A [[VmFunctionImplementation]] should not free its arguments or its retun
-   * value. A VmFunctionImplementation should also not retain any references to
-   * its veturn value.
    */
   createNewFunction(String func_name, Dart_Handler handler) {
-    // const fnId = ++this.fnNextId
-    // this.fnMap.set(fnId, fn)
-
     final int handler_id = ++_next_handler_Id;
     if (dart_handler_map == null) {
       dart_handler_map = new Map();
@@ -83,23 +91,16 @@ class JSEngine {
     dart_handler_map.putIfAbsent(handler_id, () => handler);
 
     installDartHook(_ctx, global.value, Utf8Fix.toUtf8(func_name), handler_id);
+  }
 
-    // const fnIdHandle = this.newNumber(fnId)
-    // const funcHandle = this.heapValueHandle(
-    //   this.ffi.QTS_NewFunction(this.ctx.value, fnIdHandle.value, name)
-    // )
-
-    // // We need to free fnIdHandle's pointer, but not the JSValue, which is retained inside
-    // // QuickJS for late.
-    // this.module._free(fnIdHandle.value)
-
-    // return funcHandle
+  createNewAsyncFunction(String func_name) {
+    print("Not Implemented");
   }
 
   static Pointer callBackWrapper(
       Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer<Uint64> argv, Pointer func_data) {
     final int handler_id = ToInt64(ctx, func_data);
-    final Function handler = dart_handler_map[handler_id];
+    final Dart_Handler handler = dart_handler_map[handler_id];
 
     if (handler == null) {
       throw 'QuickJS VM had no callback with id ${handler_id}';
@@ -108,9 +109,9 @@ class JSEngine {
     List<Pointer> args =
         argc > 1 ? List.generate(argc, (index) => argv.elementAt(2 * index)) : [argv];
 
-    var result = handler(ctx, args);
+    var result = handler(ctx, this_val, args, handler_id, this_val);
 
-    if (result.runtimeType.toString() == "Future<dynamic>") {
+    if (result is Future<dynamic>) {
       return atomToValue(ctx, 194);
     }
     return result;
@@ -152,14 +153,35 @@ class JSEngine {
     // return ownedResultPtr as JSValuePointer
   }
 
+  static void voidCallBackWrapper(Pointer<JSContext> ctx, Pointer this_val, int argc,
+      Pointer<Uint64> argv, Pointer func_data, Pointer result_ptr) {
+    final int handler_id = ToInt64(ctx, func_data);
+    final Dart_Handler handler = dart_handler_map[handler_id];
+    if (handler == null) {
+      throw 'QuickJS VM had no callback with id ${handler_id}';
+    }
+    List<Pointer> args =
+        argc > 1 ? List.generate(argc, (index) => argv.elementAt(2 * index)) : [argv];
+
+    handler(ctx, this_val, args, handler_id, result_ptr);
+  }
+
   JS_Value callFunction(JS_Value js_func_obj, JS_Value js_obj, int arg_length, JS_Value arg_value) {
     Pointer callResult = call(_ctx, js_func_obj.value, js_obj.value, arg_length, arg_value.value);
     return JS_Value(_ctx, callResult);
   }
 
-  JS_Value dart_call_js(JS_Value this_val, Object params) {
+  JS_Value dart_call_js(JS_Value this_val, List<JS_Value> params) {
     try {
       return this_val.call_js(params);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  JS_Value dart_call_js_encode(JS_Value this_val, List<Object> params) {
+    try {
+      return this_val.call_js_encode(params);
     } catch (e) {
       throw e;
     }

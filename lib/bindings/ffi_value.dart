@@ -232,6 +232,10 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> str) newString =
 final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> str) newAtomString = dylib
     .lookup<NativeFunction<Pointer Function(Pointer, Pointer<Utf8Fix>)>>('newAtomString')
     .asFunction();
+// DART_EXTERN_C JSAtom *newAtom(JSContext *ctx, const char *str)
+final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> str) newAtom = dylib
+    .lookup<NativeFunction<Pointer Function(Pointer, Pointer<Utf8Fix>)>>('newAtom')
+    .asFunction();
 
 final Pointer Function(Pointer<JSContext> context, int val) atomToString = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Uint32)>>('atomToString')
@@ -273,3 +277,8 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Uint8> buf, int len) newA
                 Pointer Function(
                     Pointer<JSContext> ctx, Pointer<Uint8> buf, Int32 len)>>('newArrayBufferCopy')
         .asFunction();
+
+// DART_EXTERN_C JSValue *jsvalue_copy(JSValue *des, JSValue *src)
+final Pointer Function(Pointer des, Pointer src) jsvalue_copy = dylib
+    .lookup<NativeFunction<Pointer Function(Pointer des, Pointer src)>>('jsvalue_copy')
+    .asFunction();

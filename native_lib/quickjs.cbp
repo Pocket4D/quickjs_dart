@@ -74,7 +74,7 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/Users/suwei/dev/dart_quickjs_ffi/native_lib/quickjs-ffi.c">
+		<Unit filename="/Users/suwei/dev/dart_quickjs_ffi/native_lib/quickjs-ffi.cc">
 			<Option target="quickjs"/>
 		</Unit>
 		<Unit filename="/Users/suwei/dev/dart_quickjs_ffi/native_lib/quickjs-ffi.h">

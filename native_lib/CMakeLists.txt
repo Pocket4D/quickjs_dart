@@ -12,6 +12,8 @@ endif()
 
 
 if(build_os MATCHES "linux")
+    set(CMAKE_CXX_STANDARD 11) # c++标准
+    set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -frtti -fexceptions")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build/linux)
 endif()
 
@@ -30,18 +32,20 @@ if(build_os MATCHES "android")
 endif()
 
 if(build_os MATCHES "ios")
+    set(CMAKE_CXX_STANDARD 11) # c++标准
+    set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -frtti -fexceptions")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../build/ios/dynamic)
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../build/ios/static)
 endif()
 
 
 
-project(quickjs VERSION 1.0.0 LANGUAGES C)
+project(quickjs VERSION 1.0.0 LANGUAGES C CXX)
 file(STRINGS VERSION version)
 
 # set(quickjs_src quickjs.c)
 
-set(quickjs_src ${CMAKE_SOURCE_DIR}/quickjs/quickjs.c ${CMAKE_SOURCE_DIR}/quickjs/libunicode.c ${CMAKE_SOURCE_DIR}/quickjs/libregexp.c ${CMAKE_SOURCE_DIR}/quickjs/cutils.c ${CMAKE_SOURCE_DIR}/quickjs/quickjs-libc.c ${CMAKE_SOURCE_DIR}/quickjs-ffi.c)
+set(quickjs_src ${CMAKE_SOURCE_DIR}/quickjs/quickjs.c ${CMAKE_SOURCE_DIR}/quickjs/libunicode.c ${CMAKE_SOURCE_DIR}/quickjs/libregexp.c ${CMAKE_SOURCE_DIR}/quickjs/cutils.c ${CMAKE_SOURCE_DIR}/quickjs/quickjs-libc.c ${CMAKE_SOURCE_DIR}/quickjs-ffi.cc)
 set(quickjs_def CONFIG_VERSION="${version}" _GNU_SOURCE)
 
 # BigNum setting

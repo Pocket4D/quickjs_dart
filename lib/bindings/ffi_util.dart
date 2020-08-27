@@ -1,6 +1,6 @@
 import 'dart:ffi';
 
-import '../ffi.dart';
+import '../core.dart';
 
 /// utils
 
@@ -19,6 +19,19 @@ final int Function(
             NativeFunction<
                 Int32 Function(Pointer<JSContext>, Pointer this_obj, Pointer prop, Pointer value,
                     Int32 flags)>>('definePropertyValue')
+        .asFunction();
+
+// DART_EXTERN_C int setPropertyInternal(JSContext *ctx, JSValueConst *this_obj,
+//                                       const JSAtom *prop, JSValue *val,
+//                                       int flags)
+
+final int Function(
+        Pointer<JSContext> context, Pointer this_obj, Pointer prop, Pointer value, int flags)
+    setPropertyInternal = dylib
+        .lookup<
+            NativeFunction<
+                Int32 Function(Pointer<JSContext>, Pointer this_obj, Pointer prop, Pointer value,
+                    Int32 flags)>>('setPropertyInternal')
         .asFunction();
 
 // int setPropertyStr(JSContext *ctx, JSValueConst *this_obj,

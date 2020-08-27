@@ -1,13 +1,23 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <math.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstring>
+#include <cstddef>
+#include <cmath>
+#include <csignal>
 #include <sys/types.h>
 #include <zconf.h>
+#include <condition_variable> // NOLINT(build/c++11)
+#include <functional>         // NOLINT(build/c++11)
+#include <mutex>              // NOLINT(build/c++11)
+#include <queue>              // NOLINT(build/c++11)
+#include <thread>             // NOLINT(build/c++11)
+#include <setjmp.h>           // NOLINT
+#include <signal.h>           // NOLINT
+#include <future>
 
 #include "quickjs/quickjs.h"
 #include "quickjs-ffi.h"
+// #include "include/Block.h"
 #include "include/dart_api_dl.h"
 #include "include/dart_version.h"
 #include "include/internal/dart_api_dl_impl.h"
@@ -25,18 +35,18 @@ typedef void (*DartApiEntry_function)();
 DartApiEntry_function FindFunctionPointer(const DartApiEntry *entries,
                                           const char *name)
 {
-    while (entries->name != NULL)
+    while (entries->name != nullptr)
     {
         if (strcmp(entries->name, name) == 0)
             return entries->function;
         entries++;
     }
-    return NULL;
+    return nullptr;
 }
 
-intptr_t Dart_InitializeApiDL(void *data)
+DART_EXPORT intptr_t Dart_InitializeApiDL(void *data)
 {
-    DartApi *dart_api_data = (DartApi *)data;
+    auto *dart_api_data = (DartApi *)data;
 
     if (dart_api_data->major != DART_API_DL_MAJOR_VERSION)
     {
@@ -81,7 +91,6 @@ enum
 #undef DEF
     JS_ATOM_END,
 };
-
 #define JS_ATOM_LAST_KEYWORD JS_ATOM_super
 #define JS_ATOM_LAST_STRICT_KEYWORD JS_ATOM_yield
 
@@ -102,30 +111,52 @@ RegisterDartCallbackFP(
     dart_callback_ = callback;
 }
 
+DART_EXPORT void
+RegisterDartAsyncCallbackFP(
+    dart_async_handle_func callback)
+{
+    dart_async_callback_ = callback;
+}
+
+DART_EXPORT void
+RegisterDartVoidCallbackFP(
+    dart_void_handle_func callback)
+{
+    dart_void_callback_ = callback;
+}
+
 //DART_EXPORT void RegisterDartCallback(Dart_Handle h) {
 //    dart_callback_handler = Dart_NewPersistentHandle_DL(h);
 //}
 
-typedef struct DartFunc
-{
-    int32_t handler_id;
-    struct DartFunc *next;
-} DartFunc;
+//typedef struct DartFunc
+//{
+//    int64_t handler_id;
+//    JSValue *callback_value;
+//} DartFunc;
+//
+//struct DartFunc dart_funcs[0];
 
 // memcpy when result is static
-JSValue *jsvalue_to_heap(JSValueConst value)
+DART_EXTERN_C JSValue *jsvalue_to_heap(JSValueConst value)
 {
-    JSValue *result = malloc(sizeof(JSValue));
+    auto *result = static_cast<JSValue *>(malloc(sizeof(JSValueConst)));
     if (result)
     {
-        memcpy(result, &value, sizeof(JSValue));
+        memcpy(result, &value, sizeof(JSValueConst));
     }
     return result;
 }
 
-JSAtom *jsatom_to_heap(JSAtom value)
+DART_EXTERN_C JSValue *jsvalue_copy(JSValue *des, JSValue *src)
 {
-    JSAtom *result = malloc(sizeof(JSAtom));
+    memcpy(des, src, sizeof(JSValueConst));
+    return des;
+}
+
+DART_EXTERN_C JSAtom *jsatom_to_heap(JSAtom value)
+{
+    auto *result = static_cast<JSAtom *>(malloc(sizeof(JSAtom)));
     if (result)
     {
         memcpy(result, &value, sizeof(JSAtom));
@@ -133,23 +164,75 @@ JSAtom *jsatom_to_heap(JSAtom value)
     return result;
 }
 
-/// todo to do todo
+//typedef struct Async_Value {
+//    int64_t index;
+//    JSValue js_value;
+//} Async_Value;
+//
+//Async_Value async_values[0];
+//
+//DART_EXTERN_C void store_async_value(int64_t func_id, JSValue *result_ptr) {
+//    auto *async_value = static_cast<Async_Value *>(malloc(sizeof(Async_Value)));
+//    async_value->index = func_id;
+//    async_value->js_value = *result_ptr;
+//    async_values[func_id] = *async_value;
+//    free(async_value);
+//}
+//
+//DART_EXTERN_C JSValue get_async_value(int64_t func_id) {
+//    Async_Value async_value = async_values[func_id];
+//    JSValueConst result = async_value.js_value;
+//    return result;
+//}
 
-DART_EXTERN_C JSValue InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic, JSValue *func_data)
+DART_EXPORT typedef std::function<void()> Work;
+
+DART_EXTERN_C JSValue
+InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic, JSValue *func_data)
 {
-    if (dart_callback_ == NULL)
+    //    if (dart_callback_ == nullptr) {
+    //        printf("callback from C, but no Callback set");
+    //        abort();
+    //    }
+    //
+    //    JSValue *result_ptr = (*dart_callback_)(ctx, &this_val, argc, argv, func_data);
+    //
+    //    if (result_ptr == nullptr) {
+    //        return JS_UNDEFINED;
+    //    }
+    //
+    //    JSValue result = *result_ptr;
+    //
+    //    free(result_ptr);
+    //    return result;
+
+    if (dart_void_callback_ == nullptr)
     {
         printf("callback from C, but no Callback set");
         abort();
     }
-    JSValue *result_ptr = (*dart_callback_)(ctx, &this_val, argc, argv, func_data);
-    if (result_ptr == NULL)
-    {
-        return JS_UNDEFINED;
-    }
-    JSValue result = *result_ptr;
-    free(result_ptr);
-    return result;
+
+    auto *result=static_cast<JSValue *>(malloc(sizeof(JSValueConst)));
+
+    auto callback = dart_void_callback_;
+
+    const Work work = [ctx, &this_val, argc, argv, func_data, result, callback]() {
+        callback(ctx, &this_val, argc, argv, func_data, result);
+    };
+
+    work();
+
+    //    std::packaged_task<void()> tsk(work);
+    //
+    //    std::future<void> ret = tsk.get_future();
+    //
+    //    auto * th = new std::thread(std::move(tsk));
+    //
+    //    th->join();
+    //    delete th;
+    JSValueConst ret=*result;
+    free(result);
+    return ret;
 }
 
 DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id)
@@ -161,17 +244,121 @@ DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const
     // JS_DefinePropertyValueStr(ctx, cfn, "name", JS_NewString(ctx, func_name), JS_PROP_CONFIGURABLE);
 }
 
+// DART_EXPORT typedef std::function<void()> Work;
+
+// void NotifyDart(int64_t send_port, const Work *work)
+// {
+//     const auto work_addr = reinterpret_cast<intptr_t>(work);
+//     printf("C   :  Posting message (port: %lld  work: %ld ).\n",
+//            send_port, work_addr);
+
+//     Dart_CObject dart_object;
+//     dart_object.type = Dart_CObject_kInt64;
+//     dart_object.value.as_int64 = work_addr;
+
+//     const bool result = Dart_PostCObject_DL(send_port, &dart_object);
+//     if (!result)
+//     {
+//         printf("C   :  Posting message to port failed. \n");
+//         abort();
+//     }
+//     else
+//     {
+//         printf("C   :  Posting message to port success. \n");
+//     }
+// }
+
+// typedef std::function<void()> Work;
+
+// void NotifyDartWithPort(int64_t send_port)
+// {
+//     Dart_Port_DL c_port = (send_port + 1);
+//     printf("C   :  Posting message (port: %lld  work: %lld ).\n",
+//            send_port, c_port);
+
+//     Dart_CObject dart_object;
+//     dart_object.type = Dart_CObject_kInt64;
+//     dart_object.value.as_int64 = c_port;
+
+//     const bool result = Dart_PostCObject_DL(send_port, &dart_object);
+//     if (!result)
+//     {
+//         printf("C   :  Posting message to port failed. \n");
+//         abort();
+//     }
+//     else
+//     {
+//         printf("C   :  Posting message to port success. \n");
+//     }
+// }
+
+// DART_EXTERN_C JSValue
+// InvokeDartAsyncCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic,
+//                         JSValue *port)
+// {
+//     // std::mutex mutex;
+//     // std::unique_lock<std::mutex> lock(mutex);
+//     if (dart_async_callback_ == nullptr)
+//     {
+//         printf("callback from C, but no Callback set");
+//         abort();
+//     }
+
+//     // dart_async_handle_func callback = dart_async_callback_;
+//     // std::condition_variable cv;
+
+//     NotifyDartWithPort((int64_t)(toInt64(ctx, port)));
+
+//     JSValue result = JS_NULL;
+
+//     // const Work work = [ctx, &this_val, argc, argv, &result, callback, &cv]() {
+//     //     dart_async_callback_(ctx, &this_val, argc, argv, &result);
+//     //     cv.notify_one();
+//     // };
+
+//     // dart_async_callback_(ctx, &this_val, argc, argv, &result);
+//     // work();
+//     printf("is IsUninitialized ? : %d \n", JS_IsUninitialized(result));
+//     // while (JS_IsUninitialized(result))
+//     // {
+
+//     //     cv.wait(lock);
+//     //     // InvokeDartAsyncCallback(ctx, this_val, argc, argv, magic, port);
+//     // };
+//     return result;
+// }
+
+// DART_EXTERN_C void ExecuteCallback(Work *work_ptr)
+// {
+//     printf("C Da:    ExecuteCallback(%ld) \n",
+//            reinterpret_cast<intptr_t>(work_ptr));
+//     const Work work = *work_ptr;
+//     work();
+//     delete work_ptr;
+//     printf("C Da:    ExecuteCallback done.\n");
+// }
+
+// DART_EXTERN_C void
+// installDartAsyncHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t port)
+// {
+//     // printf("port in hook is %lld \n", toInt64(ctx, newInt64(ctx, port)));
+//     JSValue cfn = JS_NewCFunctionData(ctx, &InvokeDartAsyncCallback, 0, 0, 1, newInt64(ctx, port));
+//     JSValue dupped = JS_DupValue(ctx, cfn);
+//     JSAtom atom = JS_NewAtom(ctx, func_name);
+//     definePropertyValue(ctx, this_val, &atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
+// }
+
 /**
  * Interrupt handler - called regularly from QuickJS. Return !=0 to interrupt.
  * TODO: because this is perf critical, really send a new func pointer for each
  * call to QTS_RuntimeEnableInterruptHandler instead of using dispatch.
  */
 
-dart_interrupt_func *bound_interrupt = NULL;
+dart_interrupt_func *bound_interrupt = nullptr;
 
 int interrupt_handler(JSRuntime *rt, void *_unused)
 {
-    if (bound_interrupt == NULL)
+    if (bound_interrupt == nullptr)
     {
         printf("cannot call interrupt handler because no dart_interrupt_func set");
         abort();
@@ -186,18 +373,18 @@ void setInterruptCallback(dart_interrupt_func *cb)
 
 void runtimeEnableInterruptHandler(JSRuntime *rt)
 {
-    if (bound_interrupt == NULL)
+    if (bound_interrupt == nullptr)
     {
         printf("cannot enable interrupt handler because no dart_interrupt_func set");
         abort();
     }
 
-    JS_SetInterruptHandler(rt, &interrupt_handler, NULL);
+    JS_SetInterruptHandler(rt, &interrupt_handler, nullptr);
 }
 
 void runtimeDisableInterruptHandler(JSRuntime *rt)
 {
-    JS_SetInterruptHandler(rt, NULL, NULL);
+    JS_SetInterruptHandler(rt, nullptr, nullptr);
 }
 
 /*
@@ -236,14 +423,14 @@ DART_EXTERN_C int isJobPending(JSRuntime *rt)
  * If maybe_exception is an exception, get the error.
  * Otherwise, return NULL.
  */
-DART_EXTERN_C JSValue *resolveException(JSContext *ctx, JSValue *maybe_exception)
+DART_EXTERN_C JSValue *resolveException(JSContext *ctx, const JSValue *maybe_exception)
 {
     if (JS_IsException(*maybe_exception))
     {
         return jsvalue_to_heap(JS_GetException(ctx));
     }
 
-    return NULL;
+    return nullptr;
 }
 
 DART_EXTERN_C void copy_prop_if_needed(JSContext *ctx, JSValueConst dest, JSValueConst src, const char *prop_name)
@@ -265,13 +452,28 @@ DART_EXTERN_C void copy_prop_if_needed(JSContext *ctx, JSValueConst dest, JSValu
     JS_FreeAtom(ctx, prop_atom);
 }
 
+DART_EXTERN_C JSValue *
+dart_call_js(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj, int argc, JSValueConst **argv_ptrs)
+{
+    // convert array of pointers to array of values
+
+    JSValueConst argv[argc];
+    int i;
+    for (i = 0; i < argc; i++)
+    {
+        argv[i] = *(argv_ptrs[i]);
+    }
+
+    return jsvalue_to_heap(JS_Call(ctx, *func_obj, *this_obj, argc, argv));
+}
+
 DART_EXTERN_C JSValue *call(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj,
                             int argc, JSValueConst *argv)
 {
     return jsvalue_to_heap(JS_Call(ctx, *func_obj, *this_obj, argc, argv));
 }
 
-DART_EXTERN_C JSValue *invoke(JSContext *ctx, JSValueConst *this_val, JSAtom *atom,
+DART_EXTERN_C JSValue *invoke(JSContext *ctx, JSValueConst *this_val, const JSAtom *atom,
                               int argc, JSValueConst *argv)
 {
     return jsvalue_to_heap(JS_Invoke(ctx, *this_val, *atom, argc, argv));
@@ -301,7 +503,7 @@ DART_EXTERN_C JS_BOOL detectModule(const char *input, size_t input_len)
 DART_EXTERN_C JSValue *eval(JSContext *ctx, const char *input, size_t input_len)
 {
     int argc = 0;
-    char *argv[1] = {NULL};
+    char *argv[1] = {nullptr};
     js_std_add_helpers(ctx, argc, argv);
     JSValue value = JS_Eval(ctx, input, input_len, "quickjs.js", JS_EVAL_TYPE_GLOBAL);
     JSValue *ret;
@@ -338,14 +540,14 @@ DART_EXTERN_C int isInstanceOf(JSContext *ctx, JSValueConst *val, JSValueConst *
 }
 
 DART_EXTERN_C int defineProperty(JSContext *ctx, JSValueConst *this_obj,
-                                 JSAtom *prop, JSValueConst *val,
+                                 const JSAtom *prop, JSValueConst *val,
                                  JSValueConst *getter, JSValueConst *setter, int flags)
 {
     return JS_DefineProperty(ctx, *this_obj, *prop, *val, *getter, *setter, flags);
 }
 
 DART_EXTERN_C int definePropertyValue(JSContext *ctx, JSValueConst *this_obj,
-                                      JSAtom *prop, JSValue *val, int flags)
+                                      const JSAtom *prop, JSValue *val, int flags)
 {
     // int ret = JS_DefinePropertyValue(ctx, *this_obj, *prop, *val, flags);
     // JS_FreeValue(ctx, *val);
@@ -365,7 +567,7 @@ DART_EXTERN_C int definePropertyValueStr(JSContext *ctx, JSValueConst *this_obj,
 }
 
 DART_EXTERN_C int definePropertyGetSet(JSContext *ctx, JSValueConst *this_obj,
-                                       JSAtom *prop, JSValue *getter, JSValue *setter,
+                                       const JSAtom *prop, JSValue *getter, JSValue *setter,
                                        int flags)
 {
     return JS_DefinePropertyGetSet(ctx, *this_obj, *prop, *getter, *setter, flags);
@@ -687,7 +889,7 @@ DART_EXTERN_C int toBool(JSContext *ctx, JSValueConst *val)
     return JS_ToBool(ctx, *val);
 }
 
-DART_EXTERN_C int toInt32(JSContext *ctx, JSValueConst *val)
+DART_EXTERN_C int32_t toInt32(JSContext *ctx, JSValueConst *val)
 {
     int32_t present = 0;
     JS_ToInt32(ctx, &present, *val);
@@ -699,7 +901,7 @@ DART_EXTERN_C int toUint32(JSContext *ctx, uint32_t *pres, JSValueConst *val)
     return JS_ToUint32(ctx, pres, *val);
 }
 
-DART_EXTERN_C int toInt64(JSContext *ctx, JSValueConst *val)
+DART_EXTERN_C int64_t toInt64(JSContext *ctx, JSValueConst *val)
 {
     int64_t present = 0;
     JS_ToInt64(ctx, &present, *val);
@@ -752,7 +954,7 @@ DART_EXTERN_C const char *toCStringLen(JSContext *ctx, size_t *plen, JSValueCons
 DART_EXTERN_C const char *toCString(JSContext *ctx, JSValueConst *val1)
 {
     const char *value = JS_ToCString(ctx, *val1);
-    char *ret_str = "";
+    char *ret_str;
     int valStrLen = strlen(value);
     // printf("valStrlen: %d \n", valStrLen);
     ret_str = (char *)malloc((valStrLen + 1) * sizeof(char));
@@ -760,10 +962,10 @@ DART_EXTERN_C const char *toCString(JSContext *ctx, JSValueConst *val1)
     return ret_str;
 }
 
-DART_EXTERN_C const char toDartString(JSContext *ctx, JSValueConst *val)
+DART_EXTERN_C char toDartString(JSContext *ctx, JSValueConst *val)
 {
     const char *value = JS_ToCString(ctx, *val);
-    char *ret_str = "";
+    char *ret_str;
     int valStrLen = strlen(value);
     ret_str = (char *)malloc((valStrLen + 1) * sizeof(char));
     strcpy(ret_str, value);
@@ -794,14 +996,14 @@ DART_EXTERN_C JSValue *getPropertyUint32(JSContext *ctx, JSValueConst *this_obj,
 }
 
 DART_EXTERN_C int setPropertyInternal(JSContext *ctx, JSValueConst *this_obj,
-                                      JSAtom *prop, JSValue *val,
+                                      const JSAtom *prop, JSValue *val,
                                       int flags)
 {
     return JS_SetPropertyInternal(ctx, *this_obj, *prop, *val, flags);
 }
 
 DART_EXTERN_C int setProperty(JSContext *ctx, JSValueConst *this_obj,
-                              JSAtom *prop, JSValue *val)
+                              const JSAtom *prop, JSValue *val)
 {
     return JS_SetProperty(ctx, *this_obj, *prop, *val);
 }
@@ -824,7 +1026,7 @@ DART_EXTERN_C int setPropertyStr(JSContext *ctx, JSValueConst *this_obj,
     return JS_SetPropertyStr(ctx, *this_obj, prop, *val);
 }
 
-DART_EXTERN_C int hasProperty(JSContext *ctx, JSValueConst *this_obj, JSAtom *prop)
+DART_EXTERN_C int hasProperty(JSContext *ctx, JSValueConst *this_obj, const JSAtom *prop)
 {
     return JS_HasProperty(ctx, *this_obj, *prop);
 }
@@ -834,7 +1036,7 @@ DART_EXTERN_C int preventExtensions(JSContext *ctx, JSValueConst *obj)
     return JS_PreventExtensions(ctx, *obj);
 }
 
-DART_EXTERN_C int deleteProperty(JSContext *ctx, JSValueConst *obj, JSAtom *prop, int flags)
+DART_EXTERN_C int deleteProperty(JSContext *ctx, JSValueConst *obj, const JSAtom *prop, int flags)
 {
     return JS_DeleteProperty(ctx, *obj, *prop, flags);
 }
@@ -856,7 +1058,7 @@ DART_EXTERN_C int getOwnPropertyNames(JSContext *ctx, JSPropertyEnum **ptab,
 }
 
 DART_EXTERN_C int getOwnProperty(JSContext *ctx, JSPropertyDescriptor *desc,
-                                 JSValueConst *obj, JSAtom *prop)
+                                 JSValueConst *obj, const JSAtom *prop)
 {
     return JS_GetOwnProperty(ctx, desc, *obj, *prop);
 }
@@ -879,7 +1081,6 @@ DART_EXTERN_C const char *valueToAtomString(JSContext *ctx, JSValueConst *val)
 {
     JSAtom value = JS_ValueToAtom(ctx, *val);
     JSValue *atomPtr;
-    JSValue atomString = JS_AtomToString(ctx, value);
     atomPtr = (JSValueConst *)malloc(sizeof(JSValueConst));
     const char *ret = toCString(ctx, atomPtr);
     // JS_FreeAtom(ctx, value);
@@ -897,10 +1098,10 @@ DART_EXTERN_C JSValue *atomToString(JSContext *ctx, uint32_t atom)
     return jsvalue_to_heap(JS_AtomToString(ctx, atom));
 }
 
-DART_EXTERN_C int oper_typeof(JSContext *ctx, JSValue *op1)
+DART_EXTERN_C int oper_typeof(JSContext *ctx, const JSValue *op1)
 {
     JSAtom atom;
-    uint32_t tag;
+    int32_t tag;
 
     tag = JS_VALUE_GET_NORM_TAG(*op1);
     switch (tag)
@@ -956,7 +1157,7 @@ DART_EXTERN_C const char *dump(JSContext *ctx, JSValueConst *obj)
     {
         const char *obj_json_chars = JS_ToCString(ctx, obj_json_value);
         JS_FreeValue(ctx, obj_json_value);
-        if (obj_json_chars != NULL)
+        if (obj_json_chars != nullptr)
         {
             JSValue enumerable_props = JS_ParseJSON(ctx, obj_json_chars, strlen(obj_json_chars), "<dump>");
             JS_FreeCString(ctx, obj_json_chars);
