@@ -1,3 +1,9 @@
+import 'dart:ffi';
+
+import 'package:ffi/ffi.dart';
+
+import 'value.dart';
+
 List<int> toArray(String msg, [String enc]) {
   if (enc == 'hex') {
     List<int> hexRes = new List();
@@ -24,5 +30,23 @@ List<int> toArray(String msg, [String enc]) {
     }
 
     return noHexRes;
+  }
+}
+
+Map<String, dynamic> paramsExecutor([List<JS_Value> params]) {
+  if (params != null) {
+    List<int> address_array = params.map<int>((element) {
+      return element.address;
+    }).toList();
+
+    final _data = allocate<Pointer<Pointer>>(count: address_array.length);
+
+    for (int i = 0; i < address_array.length; ++i) {
+      _data[i] = Pointer.fromAddress(address_array[i]);
+    }
+    return {"length": address_array.length, "data": _data};
+  } else {
+    final _data2 = allocate<Pointer<Pointer>>(count: 0);
+    return {"length": 0, "data": _data2};
   }
 }

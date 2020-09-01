@@ -102,8 +102,8 @@ static const char js_atom_init[] = {
 void Fatal(char const *file, int line, char const *error) {
     printf("FATAL %s:%i\n", file, line);
     printf("%s\n", error);
-//    Dart_DumpNativeStackTrace(nullptr);
-//    Dart_PrepareToAbort();
+    //    Dart_DumpNativeStackTrace(nullptr);
+    //    Dart_PrepareToAbort();
     abort();
 }
 
@@ -115,17 +115,17 @@ RegisterDartCallbackFP(
     dart_callback_ = callback;
 }
 
-DART_EXPORT void
-RegisterDartAsyncCallbackFP(
-        dart_async_handle_func callback) {
-    dart_async_callback_ = callback;
-}
-
-DART_EXPORT void
-RegisterDartVoidCallbackFP(
-        dart_void_handle_func callback) {
-    dart_void_callback_ = callback;
-}
+//DART_EXPORT void
+//RegisterAsyncDartCallbackFP(
+//        dart_async_handle_func callback) {
+//    dart_async_callback_ = callback;
+//}
+//
+//DART_EXPORT void
+//RegisterDartVoidCallbackFP(
+//        dart_void_handle_func callback) {
+//    dart_void_callback_ = callback;
+//}
 
 // memcpy when result is static
 DART_EXTERN_C JSValue *jsvalue_to_heap(JSValueConst value) {
@@ -149,165 +149,167 @@ DART_EXTERN_C JSAtom *jsatom_to_heap(JSAtom value) {
     return result;
 }
 
-typedef struct Async_Value {
-    int64_t index;
-    JSValue js_value;
-} Async_Value;
+//typedef struct Async_Value {
+//    int64_t index;
+//    JSValue js_value;
+//} Async_Value;
+//
+//Async_Value async_values[0];
+//
+//DART_EXTERN_C void store_async_value(int64_t func_id, JSValue *result_ptr) {
+//    auto *async_value = static_cast<Async_Value *>(malloc(sizeof(Async_Value)));
+//    async_value->index = func_id;
+//    async_value->js_value = *result_ptr;
+//    async_values[func_id] = *async_value;
+//    free(async_value);
+//}
+//
+//DART_EXTERN_C JSValue get_async_value(int64_t func_id) {
+//    Async_Value async_value = async_values[func_id];
+//    JSValueConst result = async_value.js_value;
+//    return result;
+//}
 
-Async_Value async_values[0];
+//
+//Dart_Port send_port_;
+//
+//static void FreeFinalizer(void *, Dart_WeakPersistentHandle, void *value) {
+//    free(value);
+//}
+//
+//class PendingCall {
+//public:
+//    PendingCall(void **buffer, size_t *length)
+//            : response_buffer_(buffer), response_length_(length) {
+//        receive_port_ =
+//                Dart_NewNativePort_DL("cpp-response", &PendingCall::HandleResponse,
+//                        /*handle_concurrently=*/false);
+//    }
+//
+//    ~PendingCall() { Dart_CloseNativePort_DL(receive_port_); }
+//
+//    Dart_Port port() const { return receive_port_; }
+//
+//    void PostAndWait(Dart_Port port, Dart_CObject *object) {
+//        std::unique_lock<std::mutex> lock(mutex);
+//        const bool success = Dart_PostCObject_DL(send_port_, object);
+//        if (!success)
+//            FATAL("Failed to send message, invalid port or isolate died");
+//
+//        printf("C   :  Waiting for result.\n");
+//        while (!notified) {
+//            cv.wait(lock);
+//        }
+//    }
+//
+//    static void HandleResponse(Dart_Port p, Dart_CObject *message) {
+//        if (message->type != Dart_CObject_kArray) {
+//            FATAL("C   :   Wrong Data: message->type != Dart_CObject_kArray.\n");
+//        }
+//        Dart_CObject **c_response_args = message->value.as_array.values;
+//        Dart_CObject *c_pending_call = c_response_args[0];
+//        Dart_CObject *c_message = c_response_args[1];
+//        printf("C   :   HandleResponse (call: %ld, message: %ld ).\n",
+//               reinterpret_cast<intptr_t>(c_pending_call),
+//               reinterpret_cast<intptr_t>(c_message));
+//
+//        auto pending_call = reinterpret_cast<PendingCall *>(
+//                c_pending_call->type == Dart_CObject_kInt64
+//                ? c_pending_call->value.as_int64
+//                : c_pending_call->value.as_int32);
+//
+//        pending_call->ResolveCall(c_message);
+//    }
+//
+//private:
+//    static bool NonEmptyBuffer(void **value) { return *value != nullptr; }
+//
+//    void ResolveCall(Dart_CObject *bytes) {
+//        assert(bytes->type == Dart_CObject_kTypedData);
+//        if (bytes->type != Dart_CObject_kTypedData) {
+//            FATAL("C   :   Wrong Data: bytes->type != Dart_CObject_kTypedData.\n");
+//        }
+//        const intptr_t response_length = bytes->value.as_typed_data.length;
+//        const uint8_t *response_buffer = bytes->value.as_typed_data.values;
+//        printf("C   :    ResolveCall(length: %ld, buffer: %ld).\n",
+//               response_length, reinterpret_cast<intptr_t>(response_buffer));
+//
+//        void *buffer = malloc(response_length);
+//        memmove(buffer, response_buffer, response_length);
+//
+//        *response_buffer_ = buffer;
+//        *response_length_ = response_length;
+//
+//        printf("C   :     Notify result ready.\n");
+//        notified = true;
+//        cv.notify_one();
+//    }
+//
+//    std::mutex mutex;
+//    std::condition_variable cv;
+//    bool notified = false;
+//
+//    Dart_Port receive_port_;
+//    void **response_buffer_;
+//    size_t *response_length_;
+//};
 
-DART_EXTERN_C void store_async_value(int64_t func_id, JSValue *result_ptr) {
-    auto *async_value = static_cast<Async_Value *>(malloc(sizeof(Async_Value)));
-    async_value->index = func_id;
-    async_value->js_value = *result_ptr;
-    async_values[func_id] = *async_value;
-    free(async_value);
-}
 
-DART_EXTERN_C JSValue get_async_value(int64_t func_id) {
-    Async_Value async_value = async_values[func_id];
-    JSValueConst result = async_value.js_value;
-    return result;
-}
-
-Dart_Port send_port_;
-
-static void FreeFinalizer(void *, Dart_WeakPersistentHandle, void *value) {
-    free(value);
-}
-
-class PendingCall {
-public:
-    PendingCall(void **buffer, size_t *length)
-            : response_buffer_(buffer), response_length_(length) {
-        receive_port_ =
-                Dart_NewNativePort_DL("cpp-response", &PendingCall::HandleResponse,
-                        /*handle_concurrently=*/false);
-    }
-
-    ~PendingCall() { Dart_CloseNativePort_DL(receive_port_); }
-
-    Dart_Port port() const { return receive_port_; }
-
-    void PostAndWait(Dart_Port port, Dart_CObject *object) {
-        std::unique_lock<std::mutex> lock(mutex);
-        const bool success = Dart_PostCObject_DL(send_port_, object);
-        if (!success) FATAL("Failed to send message, invalid port or isolate died");
-
-        printf("C   :  Waiting for result.\n");
-        while (!notified) {
-            cv.wait(lock);
-        }
-    }
-
-    static void HandleResponse(Dart_Port p, Dart_CObject *message) {
-        if (message->type != Dart_CObject_kArray) {
-            FATAL("C   :   Wrong Data: message->type != Dart_CObject_kArray.\n");
-        }
-        Dart_CObject **c_response_args = message->value.as_array.values;
-        Dart_CObject *c_pending_call = c_response_args[0];
-        Dart_CObject *c_message = c_response_args[1];
-        printf("C   :   HandleResponse (call: %ld, message: %ld ).\n",
-               reinterpret_cast<intptr_t>(c_pending_call),
-               reinterpret_cast<intptr_t>(c_message));
-
-        auto pending_call = reinterpret_cast<PendingCall *>(
-                c_pending_call->type == Dart_CObject_kInt64
-                ? c_pending_call->value.as_int64
-                : c_pending_call->value.as_int32);
-
-        pending_call->ResolveCall(c_message);
-    }
-
-private:
-    static bool NonEmptyBuffer(void **value) { return *value != nullptr; }
-
-    void ResolveCall(Dart_CObject *bytes) {
-        assert(bytes->type == Dart_CObject_kTypedData);
-        if (bytes->type != Dart_CObject_kTypedData) {
-            FATAL("C   :   Wrong Data: bytes->type != Dart_CObject_kTypedData.\n");
-        }
-        const intptr_t response_length = bytes->value.as_typed_data.length;
-        const uint8_t *response_buffer = bytes->value.as_typed_data.values;
-        printf("C   :    ResolveCall(length: %ld, buffer: %ld).\n",
-               response_length, reinterpret_cast<intptr_t>(response_buffer));
-
-        void *buffer = malloc(response_length);
-        memmove(buffer, response_buffer, response_length);
-
-        *response_buffer_ = buffer;
-        *response_length_ = response_length;
-
-        printf("C   :     Notify result ready.\n");
-        notified = true;
-        cv.notify_one();
-    }
-
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool notified = false;
-
-    Dart_Port receive_port_;
-    void **response_buffer_;
-    size_t *response_length_;
-};
-
-DART_EXPORT typedef std::function<void()> Work;
-
-// Simulator that simulates concurrent work with multiple threads.
-class AsyncWork {
-public:
-    static void StartWorkSimulator(const Work &work_func) {
-        running_work_simulator_ = new AsyncWork();
-        running_work_simulator_->Start(work_func);
-    }
-
-    static void StopWorkSimulator() {
-        running_work_simulator_->Stop();
-        delete running_work_simulator_;
-        running_work_simulator_ = nullptr;
-    }
-
-private:
-    static AsyncWork *running_work_simulator_;
-
-    void Start(const Work &work_func) {
-        printf("C Da:  Starting AsyncWork.\n");
-        printf("C Da:   Starting worker threads.\n");
-        thread = new std::thread(work_func);
-        printf("C Da:  Started AsyncWork.\n");
-    }
-
-    void Stop() {
-        printf("C Da:  Stopping AsyncWork.\n");
-        printf("C Da:   Waiting for worker threads to finish.\n");
-        thread->join();
-        delete thread;
-        printf("C Da:  Stopped AsyncWork.\n");
-    }
-
-    std::thread *thread;
-};
-
-AsyncWork *AsyncWork::running_work_simulator_ = 0;
-
-void NotifyDart(int64_t send_port, const Work *work) {
-    const auto work_addr = reinterpret_cast<intptr_t>(work);
-    printf("C   :  Posting message (port: %lld  work: %ld ).\n",
-           send_port, work_addr);
-
-    Dart_CObject dart_object;
-    dart_object.type = Dart_CObject_kInt64;
-    dart_object.value.as_int64 = work_addr;
-
-    const bool result = Dart_PostCObject_DL(send_port, &dart_object);
-    if (!result) {
-        printf("C   :  Posting message to port failed. \n");
-        abort();
-    } else {
-        printf("C   :  Posting message to port success. \n");
-    }
-}
+//
+//// Simulator that simulates concurrent work with multiple threads.
+//class AsyncWork {
+//public:
+//    static void StartWorkSimulator(const Work &work_func) {
+//        running_work_simulator_ = new AsyncWork();
+//        running_work_simulator_->Start(work_func);
+//    }
+//
+//    static void StopWorkSimulator() {
+//        running_work_simulator_->Stop();
+//        delete running_work_simulator_;
+//        running_work_simulator_ = nullptr;
+//    }
+//
+//private:
+//    static AsyncWork *running_work_simulator_;
+//
+//    void Start(const Work &work_func) {
+//        printf("C Da:  Starting AsyncWork.\n");
+//        printf("C Da:   Starting worker threads.\n");
+//        thread = new std::thread(work_func);
+//        printf("C Da:  Started AsyncWork.\n");
+//    }
+//
+//    void Stop() {
+//        printf("C Da:  Stopping AsyncWork.\n");
+//        printf("C Da:   Waiting for worker threads to finish.\n");
+//        thread->join();
+//        delete thread;
+//        printf("C Da:  Stopped AsyncWork.\n");
+//    }
+//
+//    std::thread *thread;
+//};
+//
+//AsyncWork *AsyncWork::running_work_simulator_ = 0;
+//
+//void NotifyDart(int64_t send_port, const Work *work) {
+//    const auto work_addr = reinterpret_cast<intptr_t>(work);
+//    printf("C   :  Posting message (port: %lld  work: %ld ).\n",
+//           send_port, work_addr);
+//
+//    Dart_CObject dart_object;
+//    dart_object.type = Dart_CObject_kInt64;
+//    dart_object.value.as_int64 = work_addr;
+//
+//    const bool result = Dart_PostCObject_DL(send_port, &dart_object);
+//    if (!result) {
+//        printf("C   :  Posting message to port failed. \n");
+//        abort();
+//    } else {
+//        printf("C   :  Posting message to port success. \n");
+//    }
+//}
 
 DART_EXTERN_C JSValue
 InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic, JSValue *func_data) {
@@ -316,23 +318,109 @@ InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst
         printf("callback from C, but no Callback set");
         abort();
     }
-
-    auto *result = dart_callback_(ctx, &this_val, argc, argv, func_data);
-
-//    auto callback = dart_void_callback_;
-//
-//
-//    const Work work = [ctx, &this_val, argc, argv, func_data, result, callback]() {
-//        callback(ctx, &this_val, argc, argv, func_data, result);
-//    };
-//    work();
-
-    JSValueConst ret = *result;
-
-    free(result);
+    JSValue ret = *(dart_callback_(ctx, &this_val, argc, argv, func_data));
+    js_std_loop(ctx);
     return ret;
 }
 
+//DART_EXTERN_C JSValue
+//InvokeDartAsyncCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic,
+//                        JSValue *func_data) {
+//
+//    if (dart_async_callback_ == nullptr) {
+//        printf("callback from C, but no Callback set");
+//        abort();
+//    }
+//
+//    JSValueConst global = JS_GetGlobalObject(ctx);
+//    JSValueConst queue = JS_GetPropertyStr(ctx, global, "__global_async_callback");
+//    int32_t present = 0;
+//    JSValueConst length_val = JS_GetPropertyStr(ctx, queue, "length");
+//    auto queue_length = JS_ToInt32(ctx, &present, length_val);
+//
+//
+//    const char *native_port = toCString(ctx, getPropertyStr(ctx, func_data, "native_port"));
+//
+//    int32_t handler_id = toInt32(ctx, getPropertyStr(ctx, func_data, "handler_id"));
+//    printf("current queue is %d \n", queue_length);
+//    printf("native_port is %s \n", native_port);
+//    printf("handler_id is %d \n", handler_id);
+//
+//    int64_t native_port_id = strtol(native_port, nullptr, 10);
+//
+//    printf("native_port_id is %lld \n", native_port_id);
+//
+//
+//    // int64_t handler_id = toInt64(ctx,func_data);
+//
+//
+////
+////    Dart_CObject c_handler_id;
+////    c_handler_id.type = Dart_CObject_kInt64;
+////    c_handler_id.value.as_int64 = handler_id;
+////
+////    Dart_CObject c_queue_id;
+////    c_queue_id.type = Dart_CObject_kInt64;
+////    c_queue_id.value.as_int64 = queue_id;
+////
+////    Dart_CObject c_context;
+////    c_context.type = Dart_CObject_kInt64;
+////    c_context.value.as_int64 = reinterpret_cast<intptr_t>(ctx);
+////
+////    Dart_CObject c_this_val;
+////    c_this_val.type = Dart_CObject_kInt64;
+////    c_this_val.value.as_int64 =reinterpret_cast<intptr_t>(&this_val);
+//////
+////    Dart_CObject c_this_argc;
+////    c_this_argc.type = Dart_CObject_kInt64;
+////    c_this_argc.value.as_int64 = (int64_t)(argc);
+//////
+////    Dart_CObject c_this_argv;
+////    c_this_argv.type = Dart_CObject_kInt64;
+////    c_this_argv.value.as_int64 = reinterpret_cast<intptr_t>(argv);
+////
+////
+////    Dart_CObject *c_request_arr[] = {&c_handler_id, &c_queue_id, &c_context,&c_this_val,&c_this_argc,&c_this_argv};
+////    // Dart_CObject *c_request_arr[] = {&c_handler_id, &c_queue_id};
+////    Dart_CObject c_request;
+////    c_request.type = Dart_CObject_kArray;
+////    c_request.value.as_array.values = c_request_arr;
+////    c_request.value.as_array.length =
+////            sizeof(c_request_arr) / sizeof(c_request_arr[0]);
+////
+////    Dart_PostCObject_DL(native_port_id, &c_request);
+//
+//
+//
+//
+//    // JSValue ret_val;
+//    JSValue queues = JS_GetPropertyStr(ctx, global, "__global_async_callback");
+//
+//    const Work work = [&queues, &queue_length](JSValue *result) {
+//        printf("ffffff \n");
+//    };
+//    const Work *work_ptr = new Work(work);
+//    dart_async_callback_(ctx, &this_val, argc, argv, handler_id, queue_length + 1, work_ptr);
+//
+////    free(args);
+//    // JS_FreeValue(ctx,*args);
+//    int64_t queue_id = queue_length + 1;
+//    JSValueConst new_queue_id = JS_NewInt32(ctx, queue_id);
+//    auto *args = (JSValue *) malloc(sizeof(JSValue));
+//    args[0] = queue;
+//    args[1] = new_queue_id;
+//
+//    JSValueConst ret = JS_Call(ctx, JS_GetPropertyStr(ctx, global, "__getAsyncValueFromQueueId"), JS_NULL, 2, args);
+//
+//    JS_FreeValue(ctx, *argv);
+//    JS_FreeValue(ctx, *func_data);
+//    JS_FreeValue(ctx, this_val);
+//    JS_FreeValue(ctx, queues);
+//    JS_FreeValue(ctx, *args);
+//    return ret;
+//}
+
+// todo: func_name should be JSValue and atom = valuetoAtom
 DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id) {
     JSValue cfn = JS_NewCFunctionData(ctx, &InvokeDartCallback, 0, 0, 1, newInt64(ctx, func_id));
     JSValue dupped = JS_DupValue(ctx, cfn);
@@ -340,13 +428,31 @@ DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const
     definePropertyValue(ctx, this_val, &atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
 }
 
+// todo: func_name should be JSValue and atom = valuetoAtom, func_data should be JSValue(Object:{port_id:handler:id})
+//DART_EXTERN_C void
+//installAsyncDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, JSValueConst *func_data) {
+//    JSValue cfn = JS_NewCFunctionData(ctx, &InvokeDartAsyncCallback, 0, 0, 1, func_data);
+//    JSValue dupped = JS_DupValue(ctx, cfn);
+//    JSAtom atom = JS_NewAtom(ctx, func_name);
+//
+//    definePropertyValue(ctx, this_val, &atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
+//}
+
+DART_EXTERN_C void
+setAsyncResult(JSContext *ctx, JSValueConst *queue_id, JSValueConst *func_data) {
+    JSValueConst global = JS_GetGlobalObject(ctx);
+    JS_SetProperty(ctx, JS_GetProperty(ctx, global, JS_NewAtom(ctx, "__global_async_callback")),
+                   JS_ValueToAtom(ctx, *queue_id), *func_data);
+}
 
 
-DART_EXTERN_C void ExecuteCallback(Work *work_ptr) {
+
+
+DART_EXTERN_C void ExecuteCallback(Work *work_ptr, JSValue *result) {
     printf("C Da:    ExecuteCallback(%ld) \n",
            reinterpret_cast<intptr_t>(work_ptr));
     const Work work = *work_ptr;
-    work();
+    work(result);
     delete work_ptr;
     printf("C Da:    ExecuteCallback done.\n");
 }
@@ -450,12 +556,22 @@ dart_call_js(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj, int
 }
 
 DART_EXTERN_C JSValue *call(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj,
-                            int argc, JSValueConst *argv) {
+                            int argc, JSValueConst **argv_ptrs) {
+    JSValueConst argv[argc];
+    int i;
+    for (i = 0; i < argc; i++) {
+        argv[i] = *(argv_ptrs[i]);
+    }
     return jsvalue_to_heap(JS_Call(ctx, *func_obj, *this_obj, argc, argv));
 }
 
 DART_EXTERN_C JSValue *invoke(JSContext *ctx, JSValueConst *this_val, const JSAtom *atom,
-                              int argc, JSValueConst *argv) {
+                              int argc, JSValueConst **argv_ptrs) {
+    JSValueConst argv[argc];
+    int i;
+    for (i = 0; i < argc; i++) {
+        argv[i] = *(argv_ptrs[i]);
+    }
     return jsvalue_to_heap(JS_Invoke(ctx, *this_val, *atom, argc, argv));
 }
 
@@ -892,13 +1008,13 @@ DART_EXTERN_C int setPropertyInternal(JSContext *ctx, JSValueConst *this_obj,
     return JS_SetPropertyInternal(ctx, *this_obj, *prop, *val, flags);
 }
 
-DART_EXTERN_C void setProp(JSContext *ctx, JSValueConst *this_val, JSValueConst *prop_name, JSValueConst *prop_value,int flags) {
+DART_EXTERN_C void
+setProp(JSContext *ctx, JSValueConst *this_val, JSValueConst *prop_name, JSValueConst *prop_value, int flags) {
     JSAtom prop_atom = JS_ValueToAtom(ctx, *prop_name);
     JSValue extra_prop_value = JS_DupValue(ctx, *prop_value);
-    JS_SetPropertyInternal(ctx, *this_val, prop_atom, extra_prop_value,flags); // consumes extra_prop_value
+    JS_SetPropertyInternal(ctx, *this_val, prop_atom, extra_prop_value, flags); // consumes extra_prop_value
     JS_FreeAtom(ctx, prop_atom);
 }
-
 
 DART_EXTERN_C int setProperty(JSContext *ctx, JSValueConst *this_obj,
                               const JSAtom *prop, JSValue *val) {
@@ -962,15 +1078,12 @@ DART_EXTERN_C JSAtom *valueToAtom(JSContext *ctx, JSValueConst *val) {
     return jsatom_to_heap(JS_ValueToAtom(ctx, *val));
 }
 
-DART_EXTERN_C const char *valueToAtomString(JSContext *ctx, JSValueConst *val) {
-    JSAtom value = JS_ValueToAtom(ctx, *val);
-    JSValue *atomPtr;
-    atomPtr = (JSValueConst *) malloc(sizeof(JSValueConst));
-    const char *ret = toCString(ctx, atomPtr);
-    // JS_FreeAtom(ctx, value);
-    // JS_FreeValue(ctx, atomString);
-    return ret;
-}
+//DART_EXTERN_C const char *valueToAtomString(JSContext *ctx, JSValueConst *val) {
+//    JSValue *atomPtr;
+//    atomPtr = (JSValueConst *) malloc(sizeof(JSValueConst));
+//    const char *ret = toCString(ctx, atomPtr);
+//    return ret;
+//}
 
 DART_EXTERN_C JSValue *atomToValue(JSContext *ctx, JSAtom atom) {
     return jsvalue_to_heap(JS_AtomToValue(ctx, atom));
@@ -1056,10 +1169,10 @@ DART_EXTERN_C const char *dump(JSContext *ctx, JSValueConst *obj) {
         }
     }
 
-#ifdef QTS_DEBUG_MODE
-    qts_log("Error dumping JSON:");
-    js_std_dump_error(ctx);
-#endif
+//#ifdef QUICKJS_DEBUG_MODE
+//    qts_log("Error dumping JSON:");
+//    js_std_dump_error(ctx);
+//#endif
 
     // Fallback: convert to string
     return toCString(ctx, obj);

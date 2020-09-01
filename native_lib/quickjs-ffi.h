@@ -148,22 +148,23 @@ DART_EXPORT intptr_t Dart_InitializeApiDL(void *data);
 // dart handled callback
 typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data);
 // global one time release
-dart_handle_func dart_callback_ = NULL;
+dart_handle_func dart_callback_ = nullptr;
 
 
 // dart handled callback
-typedef void (*dart_void_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data, JSValue *result_ptr);
+// typedef void (*dart_void_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data, JSValue *result_ptr);
 // global one time release
-dart_void_handle_func dart_void_callback_ = NULL;
+// dart_void_handle_func dart_void_callback_ = nullptr;
 
 // hook dart
 DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
 
-typedef JSValue *(*dart_async_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *result);
+DART_EXPORT typedef std::function<void(JSValue *ret)> Work;
+typedef Dart_Handle *(*dart_async_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, int64_t handler_id, int64_t queue_id, const Work *ret);
 // global one time release
-dart_async_handle_func dart_async_callback_ = NULL;
+dart_async_handle_func dart_async_callback_ = nullptr;
 
-DART_EXTERN_C void installDartAsyncHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
+// DART_EXTERN_C void installAsyncDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, JSValueConst *func_data);
 
 typedef int dart_interrupt_func(JSRuntime *rt);
 int interrupt_handler(JSRuntime *rt, void *_unused);
@@ -184,11 +185,11 @@ extern "C"
 #endif
 
   /* JS Invoking */
-  DART_EXTERN_C JSValue *call(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj,
-                              int argc, JSValueConst *argv);
+DART_EXTERN_C JSValue *call(JSContext *ctx, JSValueConst *func_obj, JSValueConst *this_obj,
+                            int argc, JSValueConst **argv_ptrs);
 
   DART_EXTERN_C JSValue *invoke(JSContext *ctx, JSValueConst *this_val, const JSAtom *atom,
-                                int argc, JSValueConst *argv);
+                                int argc, JSValueConst **argv_ptrs);
 
   DART_EXTERN_C JSValue *callConstructor(JSContext *ctx, JSValueConst *func_obj,
                                          int argc, JSValueConst *argv);

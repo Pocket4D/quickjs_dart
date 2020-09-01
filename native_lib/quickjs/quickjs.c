@@ -1876,7 +1876,9 @@ static JSString *js_alloc_string(JSContext *ctx, int max_len, int is_wide_char)
 {
     JSString *p;
     p = js_alloc_string_rt(ctx->rt, max_len, is_wide_char);
+
     if (unlikely(!p)) {
+        printf("llc \n");
         JS_ThrowOutOfMemory(ctx);
         return NULL;
     }
@@ -3826,6 +3828,7 @@ static JSValue string_buffer_end(StringBuffer *s)
 /* create a string from a UTF-8 buffer */
 JSValue JS_NewStringLen(JSContext *ctx, const char *buf, size_t buf_len)
 {
+
     const uint8_t *p, *p_end, *p_start, *p_next;
     uint32_t c;
     StringBuffer b_s, *b = &b_s;

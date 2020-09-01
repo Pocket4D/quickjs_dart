@@ -147,8 +147,8 @@ final setContextOpaque_func setContextOpaque =
     dylib.lookup<NativeFunction<setContextOpaque_native>>(setContextOpaque_name).asFunction();
 
 // JSRuntime *JS_GetRuntime(JSContext *ctx);
-typedef getRuntime_func = Pointer<JSRuntime> Function(Pointer<JSRuntime> ctx, void opaque);
-typedef getRuntime_native = Pointer<JSRuntime> Function(Pointer<JSRuntime>, Void);
+typedef getRuntime_func = Pointer<JSRuntime> Function(Pointer<JSContext> ctx);
+typedef getRuntime_native = Pointer<JSRuntime> Function(Pointer<JSContext>);
 
 final getRuntime_name = "JS_GetRuntime";
 final getRuntime_func getRuntime =
@@ -323,9 +323,9 @@ final eval_func eval = dylib.lookup<NativeFunction<eval_native>>(eval_name).asFu
 /// JSValue invoke(JSContext *ctx, JSValueConst *this_val, uint_32 atom,
 ///                   int argc, JSValueConst *argv);
 typedef invoke_func = Pointer Function(
-    Pointer<JSContext> ctx, Pointer this_val, Pointer atom, int argc, Pointer argv);
+    Pointer<JSContext> ctx, Pointer this_val, Pointer atom, int argc, Pointer<Pointer> argv);
 typedef invoke_native = Pointer Function(
-    Pointer<JSContext> ctx, Pointer this_val, Pointer atom, Int32 argc, Pointer argv);
+    Pointer<JSContext> ctx, Pointer this_val, Pointer atom, Int32 argc, Pointer<Pointer> argv);
 
 final invoke_name = "invoke";
 
@@ -336,9 +336,9 @@ final invoke_func invoke = dylib.lookup<NativeFunction<invoke_native>>(invoke_na
 ///             int argc, JSValueConst *argv)
 
 typedef call_func = Pointer Function(
-    Pointer<JSContext> ctx, Pointer func_obj, Pointer this_val, int argc, Pointer argv);
+    Pointer<JSContext> ctx, Pointer func_obj, Pointer this_val, int argc, Pointer<Pointer> argv);
 typedef call_native = Pointer Function(
-    Pointer<JSContext> ctx, Pointer func_obj, Pointer this_val, Int32 argc, Pointer argv);
+    Pointer<JSContext> ctx, Pointer func_obj, Pointer this_val, Int32 argc, Pointer<Pointer> argv);
 
 final call_name = "call";
 
@@ -378,30 +378,45 @@ final installDartHook_func installDartHook =
 final registerDartCallbackFP =
     dylib.lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartCallbackFP");
 
-final registerDartVoidCallbackFP = dylib
-    .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartVoidCallbackFP");
+// final registerDartVoidCallbackFP = dylib
+//     .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartVoidCallbackFP");
 
 // // DART_EXTERN_C void store_async_value(int64_t func_id, JSValue *result_ptr)
 // final store_async_value =
 //     dylib.lookupFunction<Void Function(Int64, Pointer), void Function(int, Pointer)>(
 //         "store_async_value");
 
-// final registerDartAsyncCallbackFP = dylib
-//     .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartAsyncCallbackFP");
+// final registerAsyncDartCallbackFP = dylib
+//     .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterAsyncDartCallbackFP");
 
-// typedef installDartAsyncHook_func = void Function(
-//     Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, int func_id);
-// typedef installDartAsyncHook_native = Void Function(
-//     Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, Int64 func_id);
-// final installDartAsyncHook_name = "installDartAsyncHook";
-// final installDartAsyncHook_func installDartAsyncHook = dylib
-//     .lookup<NativeFunction<installDartAsyncHook_native>>(installDartAsyncHook_name)
+// typedef installAsyncDartHook_func = void Function(
+//     Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, Pointer func_id);
+// typedef installAsyncDartHook_native = Void Function(
+//     Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, Pointer func_id);
+// final installAsyncDartHook_name = "installAsyncDartHook";
+// final installAsyncDartHook_func installAsyncDartHook = dylib
+//     .lookup<NativeFunction<installAsyncDartHook_native>>(installAsyncDartHook_name)
 //     .asFunction();
 
-// // DART_EXPORT typedef std::function<void()> Work;
-class Work extends Struct {}
+// // // DART_EXPORT typedef std::function<void()> Work;
+// class Work extends Struct {}
 
-// DART_EXTERN_C void ExecuteCallback(Work *work_ptr)
+// // DART_EXTERN_C void ExecuteCallback(Work *work_ptr,JSValue *result)
 
-final ExecuteCallback = dylib
-    .lookupFunction<Void Function(Pointer<Work>), void Function(Pointer<Work>)>('ExecuteCallback');
+// final ExecuteCallback = dylib.lookupFunction<Void Function(Pointer<Work>, Pointer),
+//     void Function(Pointer<Work>, Pointer)>('ExecuteCallback');
+
+// // DART_EXTERN_C void
+// // setAsyncResult(JSContext *ctx, JSValueConst *queue_id, JSValueConst *func_data)
+
+// final setAsyncResult = dylib.lookupFunction<Void Function(Pointer<JSContext>, Pointer, Pointer),
+//     void Function(Pointer<JSContext>, Pointer, Pointer)>('setAsyncResult');
+
+// DART_EXTERN_C int isJobPending(JSRuntime *rt)
+final isJobPending =
+    dylib.lookupFunction<Int32 Function(Pointer<JSRuntime>), int Function(Pointer<JSRuntime>)>(
+        'isJobPending');
+
+// DART_EXTERN_C JSValue *executePendingJob(JSRuntime *rt, int maxJobsToExecute)
+final executePendingJob = dylib.lookupFunction<Pointer Function(Pointer<JSRuntime>, Int32),
+    Pointer Function(Pointer<JSRuntime>, int)>('executePendingJob');

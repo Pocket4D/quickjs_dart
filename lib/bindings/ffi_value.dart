@@ -96,16 +96,15 @@ final int Function(Pointer<JSContext> ctx, Pointer<Uint32> pres, Pointer value) 
     .asFunction();
 // int toInt64(JSContext *ctx, JSValueConst val);
 final int Function(Pointer<JSContext> ctx, Pointer value) ToInt64 = dylib
-    .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer value)>>('toInt64')
+    .lookup<NativeFunction<Int64 Function(Pointer<JSContext> ctx, Pointer value)>>('toInt64')
     .asFunction();
 // int toIndex(JSContext *ctx, uint64_t *plen, JSValueConst val);
 final int Function(Pointer<JSContext> ctx, Pointer<Uint64> pres, Pointer value) ToIndex = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Uint64>, Pointer)>>('toIndex')
     .asFunction();
-// int toFloat64(JSContext *ctx, double *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Double> pres, Pointer value) ToFloat64 = dylib
-    .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Double>, Pointer)>>(
-        'toFloat64')
+// double toFloat64(JSContext *ctx, double *pres, JSValueConst val);
+final double Function(Pointer<JSContext> ctx, Pointer value) ToFloat64 = dylib
+    .lookup<NativeFunction<Double Function(Pointer<JSContext>, Pointer)>>('toFloat64')
     .asFunction();
 // int toBigInt64(JSContext *ctx, int64_t *pres, JSValueConst val);
 final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) ToBigInt64 = dylib

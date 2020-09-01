@@ -14,18 +14,24 @@ import 'util.dart';
 class JS_Value extends Object {
   Pointer _ptr;
   Pointer _ctx;
-
+  JSEngine engine;
   Pointer get context => _ctx;
   int get address => _ptr.address;
   Pointer get value => _ptr;
   int get value_tag => GetValueTag(_ptr);
   String get value_type => _getValueType();
+  JS_Value get console =>
+      JS_Value(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log");
 
-  JS_Value(this._ctx, this._ptr);
+  JS_Value(this._ctx, this._ptr, {this.engine});
 
   JS_Value getProperty(String propertyName) {
     var val_ptr = getPropertyStr(_ctx, _ptr, Utf8Fix.toUtf8(propertyName));
-    return JS_Value(_ctx, val_ptr);
+    var result = JS_Value(_ctx, val_ptr);
+    if (engine != null) {
+      result.engine = engine;
+    }
+    return result;
   }
 
   void setPropertyString(String propertyName, JS_Value property) {
@@ -61,25 +67,49 @@ class JS_Value extends Object {
     return to_string(_ctx, atomToString(_ctx, oper_typeof(_ctx, _ptr)));
   }
 
-  JS_Value call_js(List<JS_Value> params) {
+  void addCallback(Dart_Callback cb, [JSEngine js_engine]) {
+    if (this.engine == null && js_engine == null) {
+      throw "Have to attach a JSEngine first";
+    }
+    var _engine = this.engine ?? js_engine;
+    _engine?.createNewFunction(cb.name, cb.callback_wrapper, to_val: this);
+  }
+
+  JS_Value invokeObject(String prop_name, [List<JS_Value> params]) {
+    try {
+      if (!getProperty(prop_name).isFunction()) {
+        throw Error();
+      }
+      Map<String, dynamic> _paramsExecuted = paramsExecutor(params);
+      return JS_Value(
+          _ctx,
+          invoke(
+              _ctx, // context
+              _ptr, // this_val
+              JS_Value.newAtom(_ctx, prop_name).value, // atom
+              (_paramsExecuted["length"] as int), // argc
+              (_paramsExecuted["data"] as Pointer<Pointer>) // argv
+              ));
+    } catch (e) {
+      throw QuickJSError.typeError("not Function").throwError();
+    }
+  }
+
+  JS_Value call_js([List<JS_Value> params]) {
     try {
       if (!isFunction()) {
         throw Error();
       }
-      List<int> address_array = params.map<int>((element) {
-        return element.address;
-      }).toList();
-
-      final _data = allocate<Pointer<Pointer>>(count: address_array.length);
-
-      for (int i = 0; i < address_array.length; ++i) {
-        _data[i] = Pointer.fromAddress(address_array[i]);
-      }
-
-      JS_Value callResult =
-          JS_Value(_ctx, dart_call_js(_ctx, _ptr, newNull(_ctx), address_array.length, _data));
-
-      return callResult;
+      Map<String, dynamic> _paramsExecuted = paramsExecutor(params);
+      return JS_Value(
+          _ctx,
+          dart_call_js(
+              _ctx, // context
+              _ptr, //  this_val
+              newNull(_ctx), // null
+              (_paramsExecuted["length"] as int), // argc
+              (_paramsExecuted["data"] as Pointer<Pointer>) // atgv
+              ));
     } catch (e) {
       throw QuickJSError.typeError("not Function").throwError();
     }
@@ -129,66 +159,66 @@ class JS_Value extends Object {
   }
 
   /// make a new js_bool
-  JS_Value.newBool(this._ctx, bool b) {
+  JS_Value.newBool(this._ctx, bool b, [this.engine]) {
     this._ptr = newBool(_ctx, b == true ? 1 : 0);
   }
 
   /// make a new js_null
-  JS_Value.newNull(this._ctx) {
+  JS_Value.newNull(this._ctx, [this.engine]) {
     this._ptr = newNull(_ctx);
   }
 
   /// make a new js_error
-  JS_Value.newError(this._ctx) {
+  JS_Value.newError(this._ctx, [this.engine]) {
     this._ptr = newError(_ctx);
   }
 
   /// make a new js_int32
-  JS_Value.newInt32(this._ctx, int val) {
+  JS_Value.newInt32(this._ctx, int val, [this.engine]) {
     this._ptr = newInt32(_ctx, val);
   }
 
   /// make a new js_uint32
-  JS_Value.newUint32(this._ctx, int val) {
+  JS_Value.newUint32(this._ctx, int val, [this.engine]) {
     this._ptr = newUint32(_ctx, val);
   }
 
   /// make a new js_int64
-  JS_Value.newInt64(this._ctx, int val) {
+  JS_Value.newInt64(this._ctx, int val, [this.engine]) {
     this._ptr = newInt64(_ctx, val);
   }
 
   /// make a new js_bigInt64
-  JS_Value.newBigInt64(this._ctx, int val) {
+  JS_Value.newBigInt64(this._ctx, int val, [this.engine]) {
     this._ptr = newBigInt64(_ctx, val);
   }
 
   /// make a new js_bigUint64
-  JS_Value.newBigUint64(this._ctx, int val) {
+  JS_Value.newBigUint64(this._ctx, int val, [this.engine]) {
     this._ptr = newBigUint64(_ctx, val);
   }
 
-  JS_Value.newFloat64(this._ctx, double val) {
+  JS_Value.newFloat64(this._ctx, double val, [this.engine]) {
     this._ptr = newFloat64(_ctx, val);
   }
 
-  JS_Value.newString(this._ctx, String val) {
+  JS_Value.newString(this._ctx, String val, [this.engine]) {
     this._ptr = newString(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newAtom(this._ctx, String val) {
+  JS_Value.newAtom(this._ctx, String val, [this.engine]) {
     this._ptr = newAtom(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newAtomString(this._ctx, String val) {
+  JS_Value.newAtomString(this._ctx, String val, [this.engine]) {
     this._ptr = newAtomString(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newObject(this._ctx) {
+  JS_Value.newObject(this._ctx, [this.engine]) {
     this._ptr = newObject(_ctx);
   }
 
-  JS_Value.newArray(this._ctx) {
+  JS_Value.newArray(this._ctx, [this.engine]) {
     this._ptr = newArray(_ctx);
   }
 
@@ -262,6 +292,10 @@ class JS_Value extends Object {
 
   static bool is_extensible(Pointer<JSContext> ctx, Pointer val) {
     return IsExtensible(ctx, val) == 0 ? false : true;
+  }
+
+  static bool is_promise_value(Pointer<JSContext> ctx, Pointer val) {
+    return JS_Value(ctx, val).getProperty("then").isFunction();
   }
 
   static Pointer to_jsString(Pointer<JSContext> ctx, Pointer val) {
@@ -373,6 +407,21 @@ class JS_Value extends Object {
     return is_extensible(_ctx, _ptr);
   }
 
+  bool isPromise() {
+    return is_promise_value(_ctx, _ptr);
+  }
+
+  JS_Value js_then() {
+    try {
+      if (!isPromise()) {
+        throw "Value is not Promise";
+      }
+      return getProperty("then").call_js();
+    } catch (e) {
+      throw e;
+    }
+  }
+
   Pointer toJSString() {
     try {
       return to_jsString(_ctx, _ptr);
@@ -405,8 +454,8 @@ class JS_Value extends Object {
     }
   }
 
-  js_print() {
-    JS_Value(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log").call_js([this]);
+  JS_Value js_print([JS_Value value]) {
+    return console.call_js([value ?? this]);
   }
 
   void dispose() {
