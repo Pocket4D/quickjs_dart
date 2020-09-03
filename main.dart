@@ -80,7 +80,7 @@ Future<int> wait2(int number) async {
 // }
 
 Future getNetworkData(int s, Function func) {
-  return Future.delayed(Duration(seconds: s), func);
+  return Future.delayed(Duration(milliseconds: s), func);
 }
 
 main() async {
@@ -93,8 +93,8 @@ main() async {
       name: "testAdd",
       handler: (args, context, this_val) async {
         var some = await getNetworkData(args[0] as int, () => args[0] + 1);
-        var kkk = await getNetworkData(args[0] as int, () => "${args[1]} is my string");
-        print(kkk);
+        // var kkk = await getNetworkData(args[0] as int, () => "${args[1]} is my string");
+        // print("arg2 result :$kkk");
         return some;
         // await wait2(2);
       });
@@ -102,7 +102,7 @@ main() async {
   // 1.2 create function to global object
   engine.createNewFunction(testAdd_cb.name, testAdd_cb.callback_wrapper);
 
-  engine.evalScript(r"""global.testAdd(1,"2").then(val=>console.log(`js testAdd(1) : ${val}`));""");
+  // engine.evalScript(r"""global.testAdd(1,"2").then(val=>console.log(`js testAdd(1) : ${val}`));""");
 
   // 2. eval the global script;
   engine.evalScript(QSCode);
@@ -170,22 +170,7 @@ test_call_js(JSEngine engine) async {
   testAny.getProperty("some").call_js([engine.newInt32(2), engine.newFloat64(4.33)]).js_print(
       prepend_message: "dart call js is:");
 
-  // engine.evalScript(r"""global.testAdd(10).then(val=>console.log(`js testAdd(1) : ${val}`));""");
-
   // // 2.1 test the previous added function
-
-  // engine.evalScript(r"""global.testAdd(2).then(val=>console.log(`js testAdd(2) : ${val}`));""");
+  engine.evalScript(
+      r"""global.testAdd(6,"2").then(val=>console.log(`js testAdd(1,"2") : ${val}`));""");
 }
-
-// function newDeferredHandle(vm) {
-// 	const deferred = vm.evalCode(`
-// 	const result = {};
-// 	result.promise = new Promise((resolve, reject) => {
-// 	  result.resolve = resolve
-// 	  result.reject = reject
-// 	});
-// 	result;
-//    `)
-// 	// should always succeed
-// 	return vm.unwrap(deferred)
-//   }

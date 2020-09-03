@@ -94,3 +94,22 @@ final Pointer<Utf8Fix> Function(Pointer<Utf8Fix> str, int length) reverse = dyli
 final Pointer Function(Pointer argv, int index) getJSValueConstPointer = dylib
     .lookup<NativeFunction<Pointer Function(Pointer value, Int32 length)>>('getJSValueConstPointer')
     .asFunction();
+
+//  int oper_typeof(JSContext *ctx, JSValue *op1)
+final int Function(Pointer<JSContext> ctx, Pointer val1) oper_typeof = dylib
+    .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer val1)>>('oper_typeof')
+    .asFunction();
+
+// DART_EXTERN_C JSValue *newArrayBufferCopy(JSContext *ctx, const uint8_t *buf, size_t len);
+final Pointer Function(Pointer<JSContext> ctx, Pointer<Uint8> buf, int len) newArrayBufferCopy =
+    dylib
+        .lookup<
+            NativeFunction<
+                Pointer Function(
+                    Pointer<JSContext> ctx, Pointer<Uint8> buf, Int32 len)>>('newArrayBufferCopy')
+        .asFunction();
+
+// DART_EXTERN_C JSValue *jsvalue_copy(JSValue *des, JSValue *src)
+final Pointer Function(Pointer des, Pointer src) jsvalue_copy = dylib
+    .lookup<NativeFunction<Pointer Function(Pointer des, Pointer src)>>('jsvalue_copy')
+    .asFunction();

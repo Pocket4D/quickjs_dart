@@ -16,6 +16,7 @@ extension on num {
 }
 
 Map<int, Dart_Sync_Handler> dart_handler_map;
+
 final String Global_Promise_Getter = "__promise__getter";
 
 class JSEngine extends Object {
@@ -48,14 +49,13 @@ class JSEngine extends Object {
     _rt = newRuntime();
     _ctx = newContext(_rt);
     init();
-    // registerDartVoidFP();
   }
 
-  JSEngine.fromContext(Pointer<JSContext> ctx) {
-    _ctx = ctx;
-    _rt = getRuntime(_ctx);
-    // init();
-  }
+  // JSEngine.fromContext(Pointer<JSContext> ctx) {
+  //   _ctx = ctx;
+  //   _rt = getRuntime(_ctx);
+  //   // init();
+  // }
 
   init() {
     initDartAPI();

@@ -28,8 +28,8 @@
 #ifndef QUICKJS_FFI_H
 #define QUICKJS_FFI_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include "quickjs/quickjs.h"
 #include "quickjs/quickjs-libc.h"
 
@@ -150,23 +150,10 @@ typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int
 // global one time release
 dart_handle_func dart_callback_ = nullptr;
 
-//typedef void (*dart_async_handle)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data,int64_t queue_id);
-//dart_async_handle dart_async_handle_callback_= nullptr;
-
-
-
-// dart handled callback
-// typedef void (*dart_void_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data, JSValue *result_ptr);
-// global one time release
-// dart_void_handle_func dart_void_callback_ = nullptr;
 
 // hook dart
 DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
 
-DART_EXPORT typedef std::function<void(JSValue *ret)> Work;
-typedef Dart_Handle *(*dart_async_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, int64_t handler_id, int64_t queue_id, const Work *ret);
-// global one time release
-dart_async_handle_func dart_async_callback_ = nullptr;
 
 DART_EXTERN_C JSValueConst *getJSValueConstPointer(JSValueConst *argv, int index);
 
@@ -230,9 +217,9 @@ DART_EXTERN_C JSValue *call(JSContext *ctx, JSValueConst *func_obj, JSValueConst
   DART_EXTERN_C int definePropertyValueStr(JSContext *ctx, JSValueConst *this_obj,
                                            const char *prop, JSValue *val, int flags);
 
-  DART_EXTERN_C int DefinePropertyGetSet(JSContext *ctx, JSValueConst *this_obj,
-                                         JSAtom *prop, JSValue *getter, JSValue *setter,
-                                         int flags);
+  DART_EXTERN_C int definePropertyGetSet(JSContext *ctx, JSValueConst *this_obj,
+                                       const JSAtom *prop, JSValue *getter, JSValue *setter,
+                                       int flags);
 
   DART_EXTERN_C void setOpaque(JSValue *obj, void *opaque);
 

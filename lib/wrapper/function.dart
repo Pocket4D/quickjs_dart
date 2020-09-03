@@ -36,9 +36,11 @@ abstract class Dart_Callback {
         var newPromise = engine.global_promise.call_js(null);
         handler_result.then((value) {
           newPromise.getProperty("resolve").call_js([engine.to_js_val(value)]);
+          newPromise.free();
           JSEngine.loop(engine);
         }).catchError((e) {
           newPromise.getProperty("reject").call_js([engine.newString(e.toString())]);
+          newPromise.free();
           JSEngine.loop(engine);
         });
         jsvalue_copy(result_ptr, newPromise.getProperty("promise").value);
