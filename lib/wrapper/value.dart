@@ -67,7 +67,7 @@ class JS_Value extends Object {
     return to_string(_ctx, atomToString(_ctx, oper_typeof(_ctx, _ptr)));
   }
 
-  void addCallback(Dart_Callback cb, [JSEngine js_engine]) {
+  void addCallback(DartCallback_ cb, [JSEngine js_engine]) {
     if (this.engine == null && js_engine == null) {
       throw "Have to attach a JSEngine first";
     }

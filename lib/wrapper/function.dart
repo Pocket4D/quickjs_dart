@@ -3,22 +3,32 @@ import 'package:meta/meta.dart';
 
 import '../core.dart';
 
-typedef Dart_Sync_Handler(
+typedef Dart_C_Handler(
     {Pointer<JSContext> context, JS_Value this_val, List<JS_Value> args, Pointer result_ptr});
 
 typedef Dart_Function_Handler(List args, Pointer<JSContext> context, JS_Value this_val);
 
-abstract class Dart_Callback {
-  JSEngine engine;
-  String name;
-  Dart_Function_Handler handler;
+abstract class DartCallback_ {
+  final JSEngine engine;
+  final String name;
+  final Dart_Function_Handler handler;
+  get callback_name;
+  get callback_handler;
+  get callback_wrapper;
 
-  get callback_name => name;
-  get callback_handler => handler;
-  get callback_wrapper => wrapper_func;
-  Dart_Callback({@required this.engine, @required this.name, @required this.handler});
+  DartCallback_(this.engine, this.name, this.handler);
 
   wrapper_func(
+      {Pointer<JSContext> context, JS_Value this_val, List<JS_Value> args, Pointer result_ptr});
+}
+
+class DartCallback implements DartCallback_ {
+  DartCallback(
+      {@required JSEngine this.engine,
+      @required String this.name,
+      @required Dart_Function_Handler this.handler});
+
+  void wrapper_func(
       {Pointer<JSContext> context, JS_Value this_val, List<JS_Value> args, Pointer result_ptr}) {
     try {
       List _dart_args =
@@ -44,15 +54,28 @@ abstract class Dart_Callback {
           JSEngine.loop(engine);
         });
         jsvalue_copy(result_ptr, newPromise.getProperty("promise").value);
+        return;
       }
     } catch (e) {
       throw e;
     }
   }
-}
 
-class Dart_JS_Callback extends Dart_Callback {
-  Dart_JS_Callback(
-      {@required JSEngine engine, @required String name, @required Dart_Function_Handler handler})
-      : super(engine: engine, name: name, handler: handler);
+  @override
+  JSEngine engine;
+
+  @override
+  Dart_Function_Handler handler;
+
+  @override
+  String name;
+
+  @override
+  get callback_name => name;
+
+  @override
+  get callback_handler => handler;
+
+  @override
+  get callback_wrapper => wrapper_func;
 }

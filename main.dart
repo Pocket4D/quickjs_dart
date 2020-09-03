@@ -62,25 +62,8 @@ function Utf8ArrayToStr(array) {
 
 ''';
 
-Future<int> wait2(int number) async {
-  await sleep(Duration(seconds: number));
-  return number + 1;
-}
-
-// JS_Value testAdd({Pointer<JSContext> context, JS_Value this_val, List<JS_Value> args}) {
-//   var engine = JSEngine.fromContext(context);
-//   var newPromise = engine.global_promise.call_js(null);
-//   wait2(ToInt32(context, args[0].value)).then((value) {
-//     newPromise.getProperty("resolve").call_js([engine.newInt32(value)]);
-//   }).catchError((e) {
-//     newPromise.getProperty("reject").call_js([engine.newString(e.toString())]);
-//   });
-
-//   return newPromise.getProperty("promise");
-// }
-
 Future getNetworkData(int s, Function func) {
-  return Future.delayed(Duration(milliseconds: s), func);
+  return Future.delayed(Duration(seconds: s), func);
 }
 
 main() async {
@@ -88,7 +71,7 @@ main() async {
 
   // 1. add global function before eval script
   // 1.1 create an callback wrapper
-  var testAdd_cb = Dart_JS_Callback(
+  var testAdd_cb = DartCallback(
       engine: engine,
       name: "testAdd",
       handler: (args, context, this_val) async {
@@ -156,7 +139,7 @@ test_call_js(JSEngine engine) async {
   print("js static_val is : ${static_val.toDartString()}");
 
   // // added another callback function
-  var some = Dart_JS_Callback(
+  var some = DartCallback(
       engine: engine,
       name: "some",
       handler: (args, context, this_val) {
@@ -172,5 +155,5 @@ test_call_js(JSEngine engine) async {
 
   // // 2.1 test the previous added function
   engine.evalScript(
-      r"""global.testAdd(6,"2").then(val=>console.log(`js testAdd(1,"2") : ${val}`));""");
+      r"""global.testAdd(1,"2").then(val=>console.log(`js async callback testAdd(1,"2")  : ${val}`));""");
 }

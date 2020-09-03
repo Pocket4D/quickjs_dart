@@ -15,7 +15,7 @@ extension on num {
   bool get isInt => this % 1 == 0;
 }
 
-Map<int, Dart_Sync_Handler> dart_handler_map;
+Map<int, Dart_C_Handler> dart_handler_map;
 
 final String Global_Promise_Getter = "__promise__getter";
 
@@ -147,9 +147,9 @@ class JSEngine extends Object {
   }
 
   /**
-   * Convert a Javascript function into a QuickJS function value.
+   * create a function with name, and handler, attach it to some value;
    */
-  createNewFunction(String func_name, Dart_Sync_Handler handler, {JS_Value to_val}) {
+  createNewFunction(String func_name, Dart_C_Handler handler, {JS_Value to_val}) {
     if (_next_func_handler_id == null) {
       _next_func_handler_id = 0;
     }
@@ -166,7 +166,7 @@ class JSEngine extends Object {
   static void callBackWrapper(Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer argv,
       Pointer func_data, Pointer result_ptr) {
     final int handler_id = ToInt64(ctx, func_data);
-    final Dart_Sync_Handler handler = dart_handler_map[handler_id];
+    final Dart_C_Handler handler = dart_handler_map[handler_id];
 
     if (handler == null) {
       throw 'QuickJS VM had no callback with id ${handler_id}';
@@ -309,9 +309,9 @@ class JSEngine extends Object {
           var subMap = createJSObject((value as Map<String, dynamic>));
           js_array.setProperty(i, subMap);
           break;
-        case "Dart_Sync_Handler":
+        case "Dart_C_Handler":
           // TODO: should we support this?
-          // createNewFunction(i, (value as Dart_Sync_Handler), to_val: js_array);
+          // createNewFunction(i, (value as Dart_C_Handler), to_val: js_array);
           throw "${value.runtimeType} is not supported";
           break;
         case "Not_Support":
@@ -348,9 +348,9 @@ class JSEngine extends Object {
           var subMap = createJSObject((value as Map<String, dynamic>));
           js_obj.setProperty(key, subMap);
           break;
-        case "Dart_Sync_Handler":
+        case "Dart_C_Handler":
           // loop this function
-          createNewFunction(key, (value as Dart_Sync_Handler), to_val: js_obj);
+          createNewFunction(key, (value as Dart_C_Handler), to_val: js_obj);
           // throw "${value.runtimeType} is not supported";
           break;
         case "Not_Support":
@@ -381,7 +381,7 @@ class JSEngine extends Object {
         return attachEngine(createJSArray((value as List<dynamic>)));
       case "Map":
         return attachEngine(createJSObject((value as Map<String, dynamic>)));
-      case "Dart_Sync_Handler":
+      case "Dart_C_Handler":
         // loop this function
         throw "${value.runtimeType} is not supported";
       // throw "${value.runtimeType} is not supported";
@@ -449,8 +449,8 @@ String typeCheckHelper(dynamic value) {
   if (value is Map) {
     return "Map";
   }
-  if (value is Dart_Sync_Handler) {
-    return "Dart_Sync_Handler";
+  if (value is Dart_C_Handler) {
+    return "Dart_C_Handler";
   }
   return "Not_Support";
 }
