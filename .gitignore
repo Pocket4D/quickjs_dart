@@ -1,6 +1,8 @@
 # dart
 .dart_tool
 .packages
+.idea
+.fvm
 
 # make files
 /native_lib/CMakeFiles/
