@@ -58,7 +58,7 @@ class JSEngine extends Object {
   // }
 
   init() {
-    initDartAPI();
+    // initDartAPI();
     setGlobalObject("global");
     _setGlobalPromiseGetter();
     _registerDartFP();
@@ -81,14 +81,14 @@ class JSEngine extends Object {
 
   /// Dart Api for Dynamic link, should place before function call
   /// TODO: Should we keep this?
-  void initDartAPI() {
-    final initializeApi =
-        dylib.lookupFunction<IntPtr Function(Pointer<Void>), int Function(Pointer<Void>)>(
-            "Dart_InitializeApiDL");
-    if (initializeApi(NativeApi.initializeApiDLData) != 0) {
-      throw "Failed to initialize Dart API";
-    }
-  }
+  // void initDartAPI() {
+  //   final initializeApi =
+  //       dylib.lookupFunction<IntPtr Function(Pointer<Void>), int Function(Pointer<Void>)>(
+  //           "Dart_InitializeApiDL");
+  //   if (initializeApi(NativeApi.initializeApiDLData) != 0) {
+  //     throw "Failed to initialize Dart API";
+  //   }
+  // }
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<
@@ -146,9 +146,9 @@ class JSEngine extends Object {
     stop();
   }
 
-  /**
-   * create a function with name, and handler, attach it to some value;
-   */
+  ///
+  /// create a function with name, and handler, attach it to some value;
+  ///
   createNewFunction(String func_name, Dart_C_Handler handler, {JS_Value to_val}) {
     if (_next_func_handler_id == null) {
       _next_func_handler_id = 0;

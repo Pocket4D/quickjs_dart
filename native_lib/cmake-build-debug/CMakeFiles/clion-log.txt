@@ -1,4 +1,4 @@
-/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/suwei/dev/dart_quickjs_ffi/native_lib
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /Users/suwei/dev/quickjs_dart/native_lib
 -- The C compiler identification is AppleClang 11.0.3.11030032
 -- The CXX compiler identification is AppleClang 11.0.3.11030032
 -- Check for working C compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc
@@ -15,4 +15,4 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /Users/suwei/dev/dart_quickjs_ffi/native_lib
+-- Build files have been written to: /Users/suwei/dev/quickjs_dart/native_lib
