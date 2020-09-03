@@ -1,4 +1,4 @@
-group 'com.example.quickjs_dart'
+group 'com.pocket4d.io.quickjs_dart'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -32,7 +32,6 @@ android {
     }
     defaultConfig {
         minSdkVersion 16
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     lintOptions {
         disable 'InvalidPackage'

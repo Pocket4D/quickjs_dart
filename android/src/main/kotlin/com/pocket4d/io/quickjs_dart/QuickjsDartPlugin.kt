@@ -1,6 +1,7 @@
-package com.example.quickjs_dart
+package com.pocket4d.io.quickjs_dart
 
 import androidx.annotation.NonNull;
+
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -10,9 +11,15 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 
 /** QuickjsDartPlugin */
 public class QuickjsDartPlugin: FlutterPlugin, MethodCallHandler {
+  /// The MethodChannel that will the communication between Flutter and native Android
+  ///
+  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
+  /// when the Flutter Engine is detached from the Activity
+  private lateinit var channel : MethodChannel
+
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    val channel = MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "quickjs_dart")
-    channel.setMethodCallHandler(QuickjsDartPlugin());
+    channel = MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "quickjs_dart")
+    channel.setMethodCallHandler(this);
   }
 
   // This static function is optional and equivalent to onAttachedToEngine. It supports the old
@@ -41,5 +48,6 @@ public class QuickjsDartPlugin: FlutterPlugin, MethodCallHandler {
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    channel.setMethodCallHandler(null)
   }
 }
