@@ -82,3 +82,15 @@ final Pointer Function(Pointer value) extractPointer = dylib
       Pointer value,
     )>>('extractPointer')
     .asFunction();
+
+// DART_EXTERN_C char *reverse(const char *str, int length)
+final Pointer<Utf8Fix> Function(Pointer<Utf8Fix> str, int length) reverse = dylib
+    .lookup<NativeFunction<Pointer<Utf8Fix> Function(Pointer<Utf8Fix> value, Int32 length)>>(
+        'reverse')
+    .asFunction();
+
+// DART_EXTERN_C JSValueConst *getJSValueConstPointer(JSValueConst *argv, int index);
+
+final Pointer Function(Pointer argv, int index) getJSValueConstPointer = dylib
+    .lookup<NativeFunction<Pointer Function(Pointer value, Int32 length)>>('getJSValueConstPointer')
+    .asFunction();

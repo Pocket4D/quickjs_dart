@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:isolate';
@@ -28,6 +27,8 @@ class JSEngine extends Object {
 
   /// context getter
   Pointer<JSContext> get context => _ctx;
+
+  Pointer<JSRuntime> get runtime => _rt;
 
   /// global object getter
   JS_Value get global => _globalObject();
@@ -91,8 +92,8 @@ class JSEngine extends Object {
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<
-        Pointer Function(Pointer<JSContext> ctx, Pointer this_val, Int32 argc, Pointer<Uint64> argv,
-            Pointer func_data)>(callBackWrapper);
+        Void Function(Pointer<JSContext> ctx, Pointer this_val, Int32 argc, Pointer argv,
+            Pointer func_data, Pointer result_ptr)>(callBackWrapper);
     registerDartCallbackFP(dartCallbackPointer);
   }
 
@@ -162,8 +163,8 @@ class JSEngine extends Object {
     installDartHook(_ctx, to_val?.value ?? global.value, Utf8Fix.toUtf8(func_name), handler_id);
   }
 
-  static Pointer callBackWrapper(
-      Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer<Uint64> argv, Pointer func_data) {
+  static void callBackWrapper(Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer argv,
+      Pointer func_data, Pointer result_ptr) {
     final int handler_id = ToInt64(ctx, func_data);
     final Dart_Sync_Handler handler = dart_handler_map[handler_id];
 
@@ -172,14 +173,17 @@ class JSEngine extends Object {
     }
 
     List<JS_Value> _args = argc > 1
-        ? List.generate(argc, (index) => JS_Value(ctx, argv.elementAt(2 * index)))
+        ? List.generate(argc, (index) => JS_Value(ctx, getJSValueConstPointer(argv, index)))
         : argc == 1 ? [JS_Value(ctx, argv)] : null;
 
     JS_Value _this_val = JS_Value(ctx, this_val);
 
-    var result = handler(context: ctx, this_val: _this_val, args: _args);
+    handler(context: ctx, this_val: _this_val, args: _args, result_ptr: result_ptr);
 
-    return result.value;
+    _args.forEach((element) {
+      element.free();
+    });
+    _this_val.free();
   }
 
   JS_Value callFunction(JS_Value js_func_obj, JS_Value js_obj, [List<JS_Value> arg_value]) {

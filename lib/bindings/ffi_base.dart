@@ -123,8 +123,8 @@ final freeContext_func freeContext =
     dylib.lookup<NativeFunction<freeContext_native>>(freeContext_name).asFunction();
 
 // JSContext *JS_DupContext(JSContext *ctx);
-typedef dupContext_func = Pointer<JSContext> Function(Pointer<JSRuntime> ctx);
-typedef dupContext_native = Pointer<JSContext> Function(Pointer<JSRuntime>);
+typedef dupContext_func = Pointer<JSContext> Function(Pointer<JSContext> ctx);
+typedef dupContext_native = Pointer<JSContext> Function(Pointer<JSContext>);
 
 final dupContext_name = "JS_DupContext";
 final dupContext_func dupContext =
@@ -374,9 +374,21 @@ final installDartHook_name = "installDartHook";
 final installDartHook_func installDartHook =
     dylib.lookup<NativeFunction<installDartHook_native>>(installDartHook_name).asFunction();
 
+typedef installAsyncDartHook_func = void Function(
+    Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, int func_id);
+typedef installAsyncDartHook_native = Void Function(
+    Pointer<JSContext> ctx, Pointer this_val, Pointer<Utf8Fix> func_name, Int64 func_id);
+// final installAsyncDartHook_name = "installAsyncDartHook";
+// final installAsyncDartHook_func installAsyncDartHook = dylib
+//     .lookup<NativeFunction<installAsyncDartHook_native>>(installAsyncDartHook_name)
+//     .asFunction();
+
 //
 final registerDartCallbackFP =
     dylib.lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartCallbackFP");
+
+// final registerAsyncDartCallbackFP = dylib
+//     .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterAsyncDartCallbackFP");
 
 // final registerDartVoidCallbackFP = dylib
 //     .lookupFunction<Void Function(Pointer), void Function(Pointer)>("RegisterDartVoidCallbackFP");
@@ -420,3 +432,8 @@ final isJobPending =
 // DART_EXTERN_C JSValue *executePendingJob(JSRuntime *rt, int maxJobsToExecute)
 final executePendingJob = dylib.lookupFunction<Pointer Function(Pointer<JSRuntime>, Int32),
     Pointer Function(Pointer<JSRuntime>, int)>('executePendingJob');
+
+// DART_EXTERN_C JSValue *newPromiseCapability(JSContext *ctx, JSValue **resolve_funcs_out)
+final newPromiseCapability = dylib.lookupFunction<
+    Pointer Function(Pointer<JSContext>, Pointer<Pointer>),
+    Pointer Function(Pointer<JSContext>, Pointer<Pointer>)>('newPromiseCapability');

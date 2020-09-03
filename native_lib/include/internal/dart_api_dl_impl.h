@@ -65,7 +65,12 @@
     (Dart_Handle port, Dart_Port_DL * port_id))                                \
   /* Scopes */                                                                 \
   F(Dart_EnterScope, void, ())                                              \
-  F(Dart_ExitScope, void, ())
+  F(Dart_ExitScope, void, ())                                                  \
+                                                                               \
+  /* Isolate */                                                               \
+  F(Dart_CurrentIsolate, Dart_Isolate, ())                                     \
+  F(Dart_EnterIsolate, void, (Dart_Isolate isolate))                           \
+  F(Dart_ExitIsolate, void, ())
 
 #define DART_API_ALL_DL_SYMBOLS(F)                                             \
   DART_NATIVE_API_DL_SYMBOLS(F)                                                \

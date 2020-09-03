@@ -143,6 +143,17 @@ class JS_Value extends Object {
     }
   }
 
+  // private newMutablePointerArray(
+  //   length: number
+  // ): Lifetime<{ typedArray: Int32Array; ptr: JSValuePointerPointer }> {
+  //   const zeros = new Int32Array(new Array(length).fill(0))
+  //   const numBytes = zeros.length * zeros.BYTES_PER_ELEMENT
+  //   const ptr = this.module._malloc(numBytes) as JSValuePointerPointer
+  //   const typedArray = new Int32Array(this.module.HEAPU8.buffer, ptr, length)
+  //   typedArray.set(zeros)
+  //   return new Lifetime({ typedArray, ptr }, undefined, value => this.module._free(value.ptr))
+  // }
+
   JS_Value call_js_encode(List<Object> params) {
     try {
       if (!isFunction()) {
@@ -454,8 +465,12 @@ class JS_Value extends Object {
     }
   }
 
-  JS_Value js_print([JS_Value value]) {
-    return console.call_js([value ?? this]);
+  JS_Value js_print({String prepend_message, JS_Value value}) {
+    var prependString = prepend_message ?? null;
+    if (prependString == null) {
+      return console.call_js([value ?? this]);
+    }
+    return console.call_js([JS_Value.newString(_ctx, prepend_message), value ?? this]);
   }
 
   void dispose() {

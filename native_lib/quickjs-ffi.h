@@ -146,9 +146,13 @@ DART_EXTERN_C void (*Dart_ExitScope_DL)();
 DART_EXPORT intptr_t Dart_InitializeApiDL(void *data);
 
 // dart handled callback
-typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data);
+typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data,JSValue *result);
 // global one time release
 dart_handle_func dart_callback_ = nullptr;
+
+//typedef void (*dart_async_handle)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data,int64_t queue_id);
+//dart_async_handle dart_async_handle_callback_= nullptr;
+
 
 
 // dart handled callback
@@ -164,7 +168,9 @@ typedef Dart_Handle *(*dart_async_handle_func)(JSContext *ctx, JSValueConst *thi
 // global one time release
 dart_async_handle_func dart_async_callback_ = nullptr;
 
-// DART_EXTERN_C void installAsyncDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, JSValueConst *func_data);
+DART_EXTERN_C JSValueConst *getJSValueConstPointer(JSValueConst *argv, int index);
+
+// DART_EXTERN_C void installAsyncDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
 
 typedef int dart_interrupt_func(JSRuntime *rt);
 int interrupt_handler(JSRuntime *rt, void *_unused);

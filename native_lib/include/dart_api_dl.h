@@ -137,6 +137,12 @@ DART_EXTERN_C Dart_Handle (*Dart_SendPortGetId_DL)(Dart_Handle port,
 DART_EXTERN_C void (*Dart_EnterScope_DL)();
 
 DART_EXTERN_C void (*Dart_ExitScope_DL)();
+
+DART_EXTERN_C Dart_Isolate (*Dart_CurrentIsolate_DL)();
+
+DART_EXTERN_C void (*Dart_EnterIsolate_DL)(Dart_Isolate isolate);
+
+DART_EXTERN_C void (*Dart_ExitIsolate_DL)();
 // IMPORTANT! Never update these signatures without properly updating
 // DART_API_DL_MAJOR_VERSION and DART_API_DL_MINOR_VERSION.
 //

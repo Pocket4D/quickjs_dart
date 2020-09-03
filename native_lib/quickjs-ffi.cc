@@ -117,8 +117,8 @@ RegisterDartCallbackFP(
 
 //DART_EXPORT void
 //RegisterAsyncDartCallbackFP(
-//        dart_async_handle_func callback) {
-//    dart_async_callback_ = callback;
+//        dart_async_handle callback) {
+//    dart_async_handle_callback_ = callback;
 //}
 //
 //DART_EXPORT void
@@ -311,16 +311,23 @@ DART_EXTERN_C JSAtom *jsatom_to_heap(JSAtom value) {
 //    }
 //}
 
+DART_EXTERN_C JSValue *newPromiseCapability(JSContext *ctx, JSValue **resolve_funcs_out) {
+    JSValue resolve_funcs[2];
+    JSValue promise = JS_NewPromiseCapability(ctx, resolve_funcs);
+    resolve_funcs_out[0] = jsvalue_to_heap(resolve_funcs[0]);
+    resolve_funcs_out[1] = jsvalue_to_heap(resolve_funcs[1]);
+    return jsvalue_to_heap(promise);
+}
+
 DART_EXTERN_C JSValue
 InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv, int magic, JSValue *func_data) {
-
     if (dart_callback_ == nullptr) {
         printf("callback from C, but no Callback set");
         abort();
     }
-    JSValue ret = *(dart_callback_(ctx, &this_val, argc, argv, func_data));
-    js_std_loop(ctx);
-    return ret;
+    JSValue result_ptr;
+    dart_callback_(ctx, &this_val, argc, argv, func_data, &result_ptr);
+    return result_ptr;
 }
 
 //DART_EXTERN_C JSValue
@@ -429,21 +436,9 @@ DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const
 }
 
 // todo: func_name should be JSValue and atom = valuetoAtom, func_data should be JSValue(Object:{port_id:handler:id})
-//DART_EXTERN_C void
-//installAsyncDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, JSValueConst *func_data) {
-//    JSValue cfn = JS_NewCFunctionData(ctx, &InvokeDartAsyncCallback, 0, 0, 1, func_data);
-//    JSValue dupped = JS_DupValue(ctx, cfn);
-//    JSAtom atom = JS_NewAtom(ctx, func_name);
-//
-//    definePropertyValue(ctx, this_val, &atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
-//}
 
-DART_EXTERN_C void
-setAsyncResult(JSContext *ctx, JSValueConst *queue_id, JSValueConst *func_data) {
-    JSValueConst global = JS_GetGlobalObject(ctx);
-    JS_SetProperty(ctx, JS_GetProperty(ctx, global, JS_NewAtom(ctx, "__global_async_callback")),
-                   JS_ValueToAtom(ctx, *queue_id), *func_data);
-}
+
+
 
 
 
@@ -605,6 +600,15 @@ DART_EXTERN_C JSValue *eval(JSContext *ctx, const char *input, size_t input_len)
     return ret;
 }
 
+DART_EXTERN_C char *reverse(const char *str, int length) {
+    char *reversed_str = (char *) malloc((length + 1) * sizeof(char));
+    for (int i = 0; i < length; i++) {
+        reversed_str[length - i - 1] = str[i];
+    }
+    reversed_str[length] = '\0';
+    return reversed_str;
+}
+
 DART_EXTERN_C JSValue *evalFunction(JSContext *ctx, JSValue *fun_obj) {
     return jsvalue_to_heap(JS_EvalFunction(ctx, *fun_obj));
 }
@@ -613,6 +617,10 @@ DART_EXTERN_C JSValue *evalFunction(JSContext *ctx, JSValue *fun_obj) {
 DART_EXTERN_C JSValue unwrap(JSValue *value) {
     JSValue ret = *value;
     return ret;
+}
+
+DART_EXTERN_C JSValueConst *getJSValueConstPointer(JSValueConst *argv, int index) {
+    return &argv[index];
 }
 
 DART_EXTERN_C JSValue *getGlobalObject(JSContext *ctx) {
@@ -1169,10 +1177,10 @@ DART_EXTERN_C const char *dump(JSContext *ctx, JSValueConst *obj) {
         }
     }
 
-//#ifdef QUICKJS_DEBUG_MODE
-//    qts_log("Error dumping JSON:");
-//    js_std_dump_error(ctx);
-//#endif
+    //#ifdef QUICKJS_DEBUG_MODE
+    //    qts_log("Error dumping JSON:");
+    //    js_std_dump_error(ctx);
+    //#endif
 
     // Fallback: convert to string
     return toCString(ctx, obj);
