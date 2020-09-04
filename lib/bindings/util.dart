@@ -3,16 +3,12 @@ import 'dart:ffi';
 import 'dart:io' show Platform;
 import 'package:ffi/ffi.dart';
 
-final libName = "libquickjs";
-final androidPath = 'build/android/jniLibs/armebi';
-final iosPath = 'build/ios/dynamic';
-final path = "$androidPath/$libName" + ".so";
+final androidlibName = "libquickjs.so";
+final iosLibName = "quickjs.framework/quickjs";
 
 final dylib = Platform.isAndroid
-    ? DynamicLibrary.open(path)
-    : Platform.isIOS || Platform.isMacOS
-        ? DynamicLibrary.open("$iosPath/$libName.dylib")
-        : DynamicLibrary.open("build/ios/dynamic/libquickjs.so");
+    ? DynamicLibrary.open(androidlibName)
+    : Platform.isIOS ? DynamicLibrary.open(iosLibName) : DynamicLibrary.open("vm/libquickjs.dylib");
 
 // Must Fix Utf8 because QuickJS need end with terminator '\0'
 

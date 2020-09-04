@@ -198,9 +198,8 @@ final Pointer Function(Pointer<JSContext> ctx) newNull =
     dylib.lookup<NativeFunction<Pointer Function(Pointer)>>('newNull').asFunction();
 
 // JSValue newInt32(JSContext *ctx, int32_t val);
-final Pointer Function(Pointer<JSContext> ctx, int val) newInt32 = dylib
-    .lookup<NativeFunction<Pointer<JSValue> Function(Pointer, Int32)>>('newInt32')
-    .asFunction();
+final Pointer Function(Pointer<JSContext> ctx, int val) newInt32 =
+    dylib.lookup<NativeFunction<Pointer Function(Pointer, Int32)>>('newInt32').asFunction();
 // JSValue newCatchOffset(JSContext *ctx, int32_t val);
 final Pointer Function(Pointer<JSContext> ctx, int val) newCatchOffset =
     dylib.lookup<NativeFunction<Pointer Function(Pointer, Int32)>>('newCatchOffset').asFunction();

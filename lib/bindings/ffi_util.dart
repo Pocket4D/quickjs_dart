@@ -1,6 +1,7 @@
 import 'dart:ffi';
 
-import '../core.dart';
+import 'ffi_base.dart';
+import 'util.dart';
 
 /// utils
 

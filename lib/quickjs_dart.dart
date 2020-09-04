@@ -1,12 +1,13 @@
-import 'dart:async';
+library quickjs_dart;
 
-import 'package:flutter/services.dart';
+export 'bindings/ffi_base.dart';
+export 'bindings/ffi_value.dart';
+export 'bindings/ffi_util.dart';
+export 'bindings/ffi_constant.dart';
+export 'bindings/util.dart';
 
-class QuickjsDart {
-  static const MethodChannel _channel = const MethodChannel('quickjs_dart');
-
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
-}
+export 'wrapper/engine.dart';
+export 'wrapper/function.dart';
+export 'wrapper/value.dart';
+export 'wrapper/util.dart';
+export 'wrapper/error.dart';

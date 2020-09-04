@@ -5,7 +5,18 @@
 .fvm
 
 # make files
-/native_lib/CMakeFiles/
-/native_lib/*.cmake
-/native_lib/Makefile
-/native_lib/CMakeCache.txt
+
+/cpp/android/build/
+/cpp/android/CMakeFiles/
+/cpp/android/*.cmake
+/cpp/android/Makefile
+/cpp/android/CMakeCache.txt
+
+
+/cpp/ios/build/
+
+/cpp/vm/CMakeFiles/
+/cpp/vm/*.cmake
+/cpp/vm/Makefile
+/cpp/vm/CMakeCache.txt
+

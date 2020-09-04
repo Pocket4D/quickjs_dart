@@ -1,4 +1,4 @@
-class JS_Flags {
+class JSFlags {
   /* flags for object properties */
   static final JS_PROP_CONFIGURABLE = 1 << 0;
   static final JS_PROP_WRITABLE = 1 << 1;

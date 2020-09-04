@@ -7,8 +7,9 @@ import '../bindings/ffi_util.dart';
 import '../bindings/ffi_value.dart';
 import '../bindings/util.dart';
 import '../bindings/ffi_constant.dart';
-import '../core.dart';
+import 'engine.dart';
 import 'error.dart';
+import 'function.dart';
 import 'util.dart';
 
 class JS_Value extends Object {
@@ -60,7 +61,7 @@ class JS_Value extends Object {
     } else {
       _prop_name = JS_Value.newString(_ctx, prop_name.toString());
     }
-    setProp(_ctx, _ptr, _prop_name.value, value.value, flags ?? JS_Flags.JS_PROP_THROW);
+    setProp(_ctx, _ptr, _prop_name.value, value.value, flags ?? JSFlags.JS_PROP_THROW);
   }
 
   String _getValueType() {
@@ -103,7 +104,7 @@ class JS_Value extends Object {
       Map<String, dynamic> _paramsExecuted = paramsExecutor(params);
       return JS_Value(
           _ctx,
-          dart_call_js(
+          dartCallJS(
               _ctx, // context
               _ptr, //  this_val
               newNull(_ctx), // null
@@ -420,6 +421,10 @@ class JS_Value extends Object {
 
   bool isPromise() {
     return is_promise_value(_ctx, _ptr);
+  }
+
+  bool isValid() {
+    return value_type != "unknown" ? true : false;
   }
 
   JS_Value js_then() {

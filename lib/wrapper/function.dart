@@ -1,7 +1,9 @@
 import 'dart:ffi';
 import 'package:meta/meta.dart';
-
-import '../core.dart';
+import '../bindings/ffi_base.dart';
+import '../bindings/ffi_util.dart';
+import 'value.dart';
+import 'engine.dart';
 
 typedef Dart_C_Handler(
     {Pointer<JSContext> context, JS_Value this_val, List<JS_Value> args, Pointer result_ptr});

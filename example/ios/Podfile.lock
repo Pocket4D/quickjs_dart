@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - quickjs_dart (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - quickjs_dart (from `.symlinks/plugins/quickjs_dart/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  quickjs_dart:
+    :path: ".symlinks/plugins/quickjs_dart/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  quickjs_dart: e4c9c9103fb363191df775f9d0afc72519beb5c2
+
+PODFILE CHECKSUM: aafe91acc616949ddb318b77800a7f51bffa2a4c
+
+COCOAPODS: 1.9.1

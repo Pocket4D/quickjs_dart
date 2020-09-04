@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:ffi';
-import 'dart:isolate';
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
@@ -40,11 +39,10 @@ class JSEngine extends Object {
 
   int _next_func_handler_id;
 
-  static ReceivePort cRequests = ReceivePort()
-    ..listen((message) {
-      print(message);
-    });
-
+  /// Todo: with config
+  /// ```dart
+  ///  JSEngine.start({JSEngineConfig config})
+  /// ```
   JSEngine.start() {
     _rt = newRuntime();
     _ctx = newContext(_rt);
@@ -139,7 +137,7 @@ class JSEngine extends Object {
     createPromise;
   """;
     var func_ = evalScript(str);
-    global.setProperty(Global_Promise_Getter, func_, flags: JS_Flags.JS_PROP_THROW);
+    global.setProperty(Global_Promise_Getter, func_, flags: JSFlags.JS_PROP_THROW);
   }
 
   void dispose() {

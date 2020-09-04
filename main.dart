@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
-import 'package:quickjs_dart/core.dart';
+import 'package:quickjs_dart/quickjs_dart.dart';
 
 final QSCode = r'''
 // import * as os from 'os';
