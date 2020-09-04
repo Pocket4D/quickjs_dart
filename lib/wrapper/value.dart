@@ -427,17 +427,6 @@ class JS_Value extends Object {
     return value_type != "unknown" ? true : false;
   }
 
-  JS_Value js_then() {
-    try {
-      if (!isPromise()) {
-        throw "Value is not Promise";
-      }
-      return getProperty("then").call_js();
-    } catch (e) {
-      throw e;
-    }
-  }
-
   Pointer toJSString() {
     try {
       return to_jsString(_ctx, _ptr);

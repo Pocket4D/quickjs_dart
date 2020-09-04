@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
-import 'dart:io';
 import 'package:quickjs_dart/quickjs_dart.dart';
 
 final QSCode = r'''
