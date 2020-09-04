@@ -67,7 +67,7 @@ Future getNetworkData(int s, Function func) {
 }
 
 main() async {
-  final engine = JSEngine.start();
+  final engine = JSEngine();
 
   // 1. add global function before eval script
   // 1.1 create an callback wrapper

@@ -19,6 +19,27 @@ Map<int, Dart_C_Handler> dart_handler_map;
 final String Global_Promise_Getter = "__promise__getter";
 
 class JSEngine extends Object {
+  static JSEngine _instance;
+
+  /// 内部构造方法，可避免外部暴露构造函数，进行实例化
+  JSEngine._internal() {
+    _rt = newRuntime();
+    _ctx = newContext(_rt);
+    init();
+  }
+
+  factory JSEngine() => _getInstance();
+  static JSEngine get instance => _getInstance();
+
+  /// 获取单例内部方法
+  static _getInstance() {
+    // 只能有一个实例
+    if (_instance == null) {
+      _instance = JSEngine._internal();
+    }
+    return _instance;
+  }
+
   /// runtime pointer
   Pointer<JSRuntime> _rt;
 
@@ -43,10 +64,9 @@ class JSEngine extends Object {
   /// ```dart
   ///  JSEngine.start({JSEngineConfig config})
   /// ```
-  JSEngine.start() {
-    _rt = newRuntime();
+
+  withNewContext() {
     _ctx = newContext(_rt);
-    init();
   }
 
   // JSEngine.fromContext(Pointer<JSContext> ctx) {
