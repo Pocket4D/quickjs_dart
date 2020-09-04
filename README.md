@@ -37,9 +37,9 @@ void main(){
 
    print(testAdd.isFunction()); // true
    
-   var result= testAdd.call_js([engine.newInt32(12),engine.newInt32(34)]); // 2 params, 12 and 34;
+   var result= testAdd.callJS([engine.newInt32(12),engine.newInt32(34)]); // 2 params, 12 and 34;
    
-   result.js_print(); // use `console.log` in javascript, 46 is the result;
+   result.jsPrint(); // use `console.log` in javascript, 46 is the result;
 }
 
 ```
