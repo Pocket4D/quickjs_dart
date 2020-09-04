@@ -1,8 +1,11 @@
 # dart
-.dart_tool
+.dart_tool/
+.idea/
+.fvm/
+.vscode/
+
 .packages
-.idea
-.fvm
+
 
 # make files
 
