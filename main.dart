@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:quickjs_dart/quickjs_dart.dart';
 
-final QSCode = r'''
+final jsCode = r'''
 // import * as os from 'os';
 
 
 global.testAny={
-  static_val: 1,
+  staticVal: 1,
   good:(buffer1,buffer2)=>{
       let a = Array.from(new Uint8Array(buffer1));
       console.log('js good buffer1: ',Utf8ArrayToStr(a));
@@ -14,7 +14,7 @@ global.testAny={
       console.log('js good buffer2: ',Utf8ArrayToStr(b));
   },
   bad:  (val) =>{
-    global.testAny.static_val=  global.testAny.static_val + val;
+    global.testAny.staticVal=  global.testAny.staticVal + val;
   },
   twoParams:(val1,val2)=>{
     console.log(`js twoParams val1 :${val1}`);
@@ -69,10 +69,10 @@ main() async {
 
   // 1. add global function before eval script
   // 1.1 create an callback wrapper
-  var testAdd_cb = DartCallback(
+  var testAddCallback = DartCallback(
       engine: engine,
       name: "testAdd",
-      handler: (args, context, this_val) async {
+      handler: (args, context, thisVal) async {
         var some = await getNetworkData(args[0] as int, () => args[0] + 1);
         // var kkk = await getNetworkData(args[0] as int, () => "${args[1]} is my string");
         // print("arg2 result :$kkk");
@@ -81,16 +81,16 @@ main() async {
       });
 
   // 1.2 create function to global object
-  engine.createNewFunction(testAdd_cb.name, testAdd_cb.callback_wrapper);
+  engine.createNewFunction(testAddCallback.name, testAddCallback.callbackWrapper);
 
   // engine.evalScript(r"""global.testAdd(1,"2").then(val=>console.log(`js testAdd(1) : ${val}`));""");
 
   // 2. eval the global script;
-  engine.evalScript(QSCode);
+  engine.evalScript(jsCode);
 
   // 3. test another batch of script
 
-  await test_call_js(engine);
+  await testCallJS(engine);
 
   // await getNetworkData(1, () => engine.newString('123').js_print())
   //     .then((value) => engine.newString('456').js_print());
@@ -102,7 +102,7 @@ main() async {
   // JSEngine.stop(engine);
 }
 
-test_call_js(JSEngine engine) async {
+testCallJS(JSEngine engine) async {
   /// get global object with `testAny`;
   var testAny = engine.global.getProperty("testAny");
 
@@ -115,32 +115,32 @@ test_call_js(JSEngine engine) async {
     {"world": "3"}
   ];
 
-  /// use `dart_call_js` to call, with encoded Uint8Array
-  good.call_js_encode(sss);
+  /// use `dart_callJS` to call, with encoded Uint8Array
+  good.callJSEncode(sss);
 
   /// get sub-object from `testAny`
   var twoParams = testAny.getProperty("twoParams");
 
   /// send multi params to this function
-  twoParams.call_js([engine.newString("i am good"), engine.newInt32(2)]);
+  twoParams.callJS([engine.newString("i am good"), engine.newInt32(2)]);
 
   /// get sub-object from `testAny`
   var bad = testAny.getProperty("bad");
 
   // /// call function 4 times, orignally is 1;
-  bad.call_js([engine.newInt32(1)]);
-  bad.call_js([engine.newInt32(1)]);
-  bad.call_js([engine.newInt32(1)]);
-  bad.call_js([engine.newInt32(1)]);
-  var static_val = testAny.getProperty("static_val");
+  bad.callJS([engine.newInt32(1)]);
+  bad.callJS([engine.newInt32(1)]);
+  bad.callJS([engine.newInt32(1)]);
+  bad.callJS([engine.newInt32(1)]);
+  var staticVal = testAny.getProperty("staticVal");
 
-  print("js static_val is : ${static_val.toDartString()}");
+  print("js staticVal is : ${staticVal.toDartString()}");
 
   // // added another callback function
   var some = DartCallback(
       engine: engine,
       name: "some",
-      handler: (args, context, this_val) {
+      handler: (args, context, thisVal) {
         return args[1];
       });
 
@@ -148,8 +148,8 @@ test_call_js(JSEngine engine) async {
   testAny.addCallback(some);
 
   // // call the function use ffi;
-  testAny.getProperty("some").call_js([engine.newInt32(2), engine.newFloat64(4.33)]).js_print(
-      prepend_message: "dart call js is:");
+  testAny.getProperty("some").callJS([engine.newInt32(2), engine.newFloat64(4.33)]).jsPrint(
+      prependMessage: "dart call js is:");
 
   // // 2.1 test the previous added function
   engine.evalScript(

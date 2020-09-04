@@ -4,7 +4,7 @@ import 'dart:ffi';
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/util.dart';
-import '../bindings/ffi_value.dart';
+import '../bindings/ffi_value.dart' as ffiValue;
 import '../bindings/ffi_constant.dart';
 import 'util.dart';
 import 'value.dart';
@@ -14,9 +14,9 @@ extension on num {
   bool get isInt => this % 1 == 0;
 }
 
-Map<int, Dart_C_Handler> dart_handler_map;
+Map<int, DartCHandler> dartHandlerMap;
 
-final String Global_Promise_Getter = "__promise__getter";
+final String globalPromiseGetter = "__promise__getter";
 
 class JSEngine extends Object {
   static JSEngine _instance;
@@ -52,28 +52,18 @@ class JSEngine extends Object {
   Pointer<JSRuntime> get runtime => _rt;
 
   /// global object getter
-  JS_Value get global => _globalObject();
+  JSValue get global => _globalObject();
 
-  JS_Value get global_promise => global.getProperty(Global_Promise_Getter);
+  JSValue get globalPromise => global.getProperty(globalPromiseGetter);
 
-  int get handler_id => _next_func_handler_id;
+  int get handlerId => _nextFuncHandlerId;
 
-  int _next_func_handler_id;
+  int _nextFuncHandlerId;
 
   /// Todo: with config
   /// ```dart
   ///  JSEngine.start({JSEngineConfig config})
   /// ```
-
-  withNewContext() {
-    _ctx = newContext(_rt);
-  }
-
-  // JSEngine.fromContext(Pointer<JSContext> ctx) {
-  //   _ctx = ctx;
-  //   _rt = getRuntime(_ctx);
-  //   // init();
-  // }
 
   init() {
     // initDartAPI();
@@ -110,8 +100,8 @@ class JSEngine extends Object {
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<
-        Void Function(Pointer<JSContext> ctx, Pointer this_val, Int32 argc, Pointer argv,
-            Pointer func_data, Pointer result_ptr)>(callBackWrapper);
+        Void Function(Pointer<JSContext> ctx, Pointer thisVal, Int32 argc, Pointer argv,
+            Pointer funcData, Pointer resultPtr)>(callBackWrapper);
     registerDartCallbackFP(dartCallbackPointer);
   }
 
@@ -128,10 +118,10 @@ class JSEngine extends Object {
 
   int donePendingJobs({int maxNumber = -1}) {
     try {
-      var result = JS_Value(_ctx, executePendingJob(_rt, maxNumber));
+      var result = JSValue(_ctx, executePendingJob(_rt, maxNumber));
       if (result.isNumber()) {
         // result.js_print();
-        return ToInt32(_ctx, result.value);
+        return ffiValue.toInt32(_ctx, result.value);
       } else {
         return -1;
       }
@@ -156,8 +146,8 @@ class JSEngine extends Object {
     };
     createPromise;
   """;
-    var func_ = evalScript(str);
-    global.setProperty(Global_Promise_Getter, func_, flags: JSFlags.JS_PROP_THROW);
+    var func = evalScript(str);
+    global.setProperty(globalPromiseGetter, func, flags: JSFlags.JS_PROP_THROW);
   }
 
   void dispose() {
@@ -167,169 +157,169 @@ class JSEngine extends Object {
   ///
   /// create a function with name, and handler, attach it to some value;
   ///
-  createNewFunction(String func_name, Dart_C_Handler handler, {JS_Value to_val}) {
-    if (_next_func_handler_id == null) {
-      _next_func_handler_id = 0;
+  createNewFunction(String funcName, DartCHandler handler, {JSValue toVal}) {
+    if (_nextFuncHandlerId == null) {
+      _nextFuncHandlerId = 0;
     }
-    final int handler_id = ++_next_func_handler_id;
+    final int handlerId = ++_nextFuncHandlerId;
 
-    if (dart_handler_map == null) {
-      dart_handler_map = new Map();
+    if (dartHandlerMap == null) {
+      dartHandlerMap = new Map();
     }
-    dart_handler_map.putIfAbsent(handler_id, () => handler);
+    dartHandlerMap.putIfAbsent(handlerId, () => handler);
 
-    installDartHook(_ctx, to_val?.value ?? global.value, Utf8Fix.toUtf8(func_name), handler_id);
+    installDartHook(_ctx, toVal?.value ?? global.value, Utf8Fix.toUtf8(funcName), handlerId);
   }
 
-  static void callBackWrapper(Pointer<JSContext> ctx, Pointer this_val, int argc, Pointer argv,
-      Pointer func_data, Pointer result_ptr) {
-    final int handler_id = ToInt64(ctx, func_data);
-    final Dart_C_Handler handler = dart_handler_map[handler_id];
+  static void callBackWrapper(Pointer<JSContext> ctx, Pointer thisVal, int argc, Pointer argv,
+      Pointer funcData, Pointer resultPtr) {
+    final int handlerId = ffiValue.toInt64(ctx, funcData);
+    final DartCHandler handler = dartHandlerMap[handlerId];
 
     if (handler == null) {
-      throw 'QuickJS VM had no callback with id ${handler_id}';
+      throw 'QuickJS VM had no callback with id $handlerId';
     }
 
-    List<JS_Value> _args = argc > 1
-        ? List.generate(argc, (index) => JS_Value(ctx, getJSValueConstPointer(argv, index)))
-        : argc == 1 ? [JS_Value(ctx, argv)] : null;
+    List<JSValue> _args = argc > 1
+        ? List.generate(argc, (index) => JSValue(ctx, getJSValueConstPointer(argv, index)))
+        : argc == 1 ? [JSValue(ctx, argv)] : null;
 
-    JS_Value _this_val = JS_Value(ctx, this_val);
+    JSValue _thisVal = JSValue(ctx, thisVal);
 
-    handler(context: ctx, this_val: _this_val, args: _args, result_ptr: result_ptr);
+    handler(context: ctx, thisVal: _thisVal, args: _args, resultPtr: resultPtr);
 
     _args.forEach((element) {
       element.free();
     });
-    _this_val.free();
+    _thisVal.free();
   }
 
-  JS_Value callFunction(JS_Value js_func_obj, JS_Value js_obj, [List<JS_Value> arg_value]) {
-    Map<String, dynamic> _paramsExecuted = paramsExecutor(arg_value);
-    Pointer callResult = call(_ctx, js_func_obj.value, js_obj.value,
+  JSValue callFunction(JSValue jsFunction, JSValue thisVal, [List<JSValue> args]) {
+    Map<String, dynamic> _paramsExecuted = paramsExecutor(args);
+    Pointer callResult = call(_ctx, jsFunction.value, thisVal.value,
         (_paramsExecuted["length"] as int), (_paramsExecuted["value"]) as Pointer<Pointer>);
-    return attachEngine(JS_Value(_ctx, callResult));
+    return attachEngine(JSValue(_ctx, callResult));
   }
 
-  JS_Value dart_call_js(JS_Value this_val, List<JS_Value> params) {
+  JSValue callJS(JSValue thisVal, List<JSValue> params) {
     try {
-      return attachEngine(this_val.call_js(params));
+      return attachEngine(thisVal.callJS(params));
     } catch (e) {
       throw e;
     }
   }
 
-  JS_Value dart_call_js_encode(JS_Value this_val, List<Object> params) {
+  JSValue callJSEncode(JSValue thisVal, List<Object> params) {
     try {
-      return attachEngine(this_val.call_js_encode(params));
+      return attachEngine(thisVal.callJSEncode(params));
     } catch (e) {
       throw e;
     }
   }
 
-  JS_Value evalScript(String js_string) {
-    var ptr = eval(context, Utf8Fix.toUtf8(js_string), js_string.length);
-    return attachEngine(JS_Value(context, ptr));
+  JSValue evalScript(String jsString) {
+    var ptr = eval(context, Utf8Fix.toUtf8(jsString), jsString.length);
+    return attachEngine(JSValue(context, ptr));
   }
 
-  void js_print(JS_Value val) {
-    global.getProperty("console").getProperty("log").call_js([val]);
+  void jsPrint(JSValue val) {
+    global.getProperty("console").getProperty("log").callJS([val]);
   }
 
-  JS_Value _globalObject() {
-    return attachEngine(JS_Value(_ctx, getGlobalObject(_ctx)));
+  JSValue _globalObject() {
+    return attachEngine(JSValue(_ctx, getGlobalObject(_ctx)));
   }
 
-  JS_Value newInt32(int val) {
-    return JS_Value.newInt32(_ctx, val, this);
+  JSValue newInt32(int val) {
+    return JSValue.newInt32(_ctx, val, this);
   }
 
-  JS_Value newBool(bool val) {
-    return JS_Value.newBool(_ctx, val, this);
+  JSValue newBool(bool val) {
+    return JSValue.newBool(_ctx, val, this);
   }
 
-  JS_Value newNull() {
-    return JS_Value.newNull(_ctx, this);
+  JSValue newNull() {
+    return JSValue.newNull(_ctx, this);
   }
 
   /// make a new js_nul
 
-  JS_Value newError() {
-    return JS_Value.newError(_ctx, this);
+  JSValue newError() {
+    return JSValue.newError(_ctx, this);
   }
 
   /// make a new js_uint32
-  JS_Value newUint32(int val) {
-    return JS_Value.newUint32(_ctx, val, this);
+  JSValue newUint32(int val) {
+    return JSValue.newUint32(_ctx, val, this);
   }
 
   /// make a new js_int64
-  JS_Value newInt64(int val) {
-    return JS_Value.newInt64(_ctx, val, this);
+  JSValue newInt64(int val) {
+    return JSValue.newInt64(_ctx, val, this);
   }
 
   /// make a new js_bigInt64
-  JS_Value newBigInt64(int val) {
-    return JS_Value.newBigInt64(_ctx, val, this);
+  JSValue newBigInt64(int val) {
+    return JSValue.newBigInt64(_ctx, val, this);
   }
 
   /// make a new js_bigUint64
-  JS_Value newBigUint64(int val) {
-    return JS_Value.newBigUint64(_ctx, val, this);
+  JSValue newBigUint64(int val) {
+    return JSValue.newBigUint64(_ctx, val, this);
   }
 
-  JS_Value newFloat64(double val) {
-    return JS_Value.newFloat64(_ctx, val, this);
+  JSValue newFloat64(double val) {
+    return JSValue.newFloat64(_ctx, val, this);
   }
 
-  JS_Value newString(String val) {
-    return JS_Value.newString(_ctx, val, this);
+  JSValue newString(String val) {
+    return JSValue.newString(_ctx, val, this);
   }
 
-  JS_Value newAtomString(String val) {
-    return JS_Value.newAtomString(_ctx, val, this);
+  JSValue newAtomString(String val) {
+    return JSValue.newAtomString(_ctx, val, this);
   }
 
-  JS_Value newObject() {
-    return JS_Value.newObject(_ctx, this);
+  JSValue newObject() {
+    return JSValue.newObject(_ctx, this);
   }
 
-  JS_Value newArray() {
-    return JS_Value.newArray(_ctx, this);
+  JSValue newArray() {
+    return JSValue.newArray(_ctx, this);
   }
 
-  JS_Value newAtom(String val) {
-    return JS_Value.newAtom(_ctx, val, this);
+  JSValue newAtom(String val) {
+    return JSValue.newAtom(_ctx, val, this);
   }
 
-  JS_Value createJSArray(List<dynamic> dart_list) {
-    var js_array = JS_Value.newArray(_ctx, this);
-    for (int i = 0; i < dart_list.length; ++i) {
-      var value = dart_list[i];
+  JSValue createJSArray(List<dynamic> dartList) {
+    var jsArray = JSValue.newArray(_ctx, this);
+    for (int i = 0; i < dartList.length; ++i) {
+      var value = dartList[i];
       String _type = typeCheckHelper(value);
       switch (_type) {
         case "int":
-          js_array.setProperty(i, JS_Value.newInt32(_ctx, value));
+          jsArray.setProperty(i, JSValue.newInt32(_ctx, value));
           break;
         case "String":
-          js_array.setProperty(i, JS_Value.newString(_ctx, value));
+          jsArray.setProperty(i, JSValue.newString(_ctx, value));
           break;
         case "bool":
-          js_array.setProperty(i, JS_Value.newBool(_ctx, value));
+          jsArray.setProperty(i, JSValue.newBool(_ctx, value));
           break;
         case "List":
           // create array;
           var subList = createJSArray((value as List<dynamic>));
-          js_array.setProperty(i, subList);
+          jsArray.setProperty(i, subList);
           break;
         case "Map":
           // loop this function
           var subMap = createJSObject((value as Map<String, dynamic>));
-          js_array.setProperty(i, subMap);
+          jsArray.setProperty(i, subMap);
           break;
-        case "Dart_C_Handler":
+        case "DartCHandler":
           // TODO: should we support this?
-          // createNewFunction(i, (value as Dart_C_Handler), to_val: js_array);
+          // createNewFunction(i, (value as DartCHandler), toVal: jsArray);
           throw "${value.runtimeType} is not supported";
           break;
         case "Not_Support":
@@ -338,37 +328,37 @@ class JSEngine extends Object {
         default:
       }
     }
-    return js_array;
+    return jsArray;
   }
 
-  JS_Value createJSObject(Map<String, dynamic> dart_map) {
-    var js_obj = JS_Value.newObject(_ctx, this);
+  JSValue createJSObject(Map<String, dynamic> dartMap) {
+    var jsObj = JSValue.newObject(_ctx, this);
 
-    dart_map.forEach((key, value) {
+    dartMap.forEach((key, value) {
       String _type = typeCheckHelper(value);
       switch (_type) {
         case "int":
-          js_obj.setProperty(key, JS_Value.newInt32(_ctx, value));
+          jsObj.setProperty(key, JSValue.newInt32(_ctx, value));
           break;
         case "String":
-          js_obj.setProperty(key, JS_Value.newString(_ctx, value));
+          jsObj.setProperty(key, JSValue.newString(_ctx, value));
           break;
         case "bool":
-          js_obj.setProperty(key, JS_Value.newBool(_ctx, value));
+          jsObj.setProperty(key, JSValue.newBool(_ctx, value));
           break;
         case "List":
           // create array;
           var subList = createJSArray((value as List<dynamic>));
-          js_obj.setProperty(key, subList);
+          jsObj.setProperty(key, subList);
           break;
         case "Map":
           // loop this function
           var subMap = createJSObject((value as Map<String, dynamic>));
-          js_obj.setProperty(key, subMap);
+          jsObj.setProperty(key, subMap);
           break;
-        case "Dart_C_Handler":
+        case "DartCHandler":
           // loop this function
-          createNewFunction(key, (value as Dart_C_Handler), to_val: js_obj);
+          createNewFunction(key, (value as DartCHandler), toVal: jsObj);
           // throw "${value.runtimeType} is not supported";
           break;
         case "Not_Support":
@@ -378,28 +368,28 @@ class JSEngine extends Object {
       }
     });
 
-    return js_obj;
+    return jsObj;
   }
 
-  JS_Value to_js_val(dynamic value) {
+  JSValue toJSVal(dynamic value) {
     String _type = typeCheckHelper(value);
     switch (_type) {
       case "int":
         if (value > 2147483647 || value < -2147483648) {
-          return attachEngine(JS_Value.newInt64(_ctx, value));
+          return attachEngine(JSValue.newInt64(_ctx, value));
         }
-        return attachEngine(JS_Value.newInt32(_ctx, value));
+        return attachEngine(JSValue.newInt32(_ctx, value));
       case "double":
-        return attachEngine(JS_Value.newFloat64(_ctx, value));
+        return attachEngine(JSValue.newFloat64(_ctx, value));
       case "String":
-        return attachEngine(JS_Value.newString(_ctx, value));
+        return attachEngine(JSValue.newString(_ctx, value));
       case "bool":
-        return attachEngine(JS_Value.newBool(_ctx, value));
+        return attachEngine(JSValue.newBool(_ctx, value));
       case "List":
         return attachEngine(createJSArray((value as List<dynamic>)));
       case "Map":
         return attachEngine(createJSObject((value as Map<String, dynamic>)));
-      case "Dart_C_Handler":
+      case "DartCHandler":
         // loop this function
         throw "${value.runtimeType} is not supported";
       // throw "${value.runtimeType} is not supported";
@@ -410,27 +400,27 @@ class JSEngine extends Object {
     }
   }
 
-  dynamic from_js_val(JS_Value value) {
-    var val_type = value.value_type;
-    switch (val_type) {
-      case 'number':
+  dynamic fromJSVal(JSValue value) {
+    var valType = value.valueType;
+    switch (valType) {
+      case JSValueType.NUMBER:
         {
-          double trans = ToFloat64(_ctx, value.value);
+          double trans = ffiValue.toFloat64(_ctx, value.value);
           if (trans.isInt) {
-            return ToInt32(_ctx, value.value);
+            return ffiValue.toInt32(_ctx, value.value);
           }
           return trans;
         }
 
-      case 'string':
+      case JSValueType.STRING:
         return value.toDartString();
-      case 'undefined':
+      case JSValueType.UNDEFINED:
         return null;
-      case 'null':
+      case JSValueType.NULL:
         return null;
-      case 'boolean':
-        return ToBool(_ctx, value.value) == 1 ? true : false;
-      case 'object':
+      case JSValueType.BOOLEAN:
+        return ffiValue.toBool(_ctx, value.value) == 1 ? true : false;
+      case JSValueType.OBJECT:
         {
           if (value.isArray() || value.isObject()) {
             return jsonDecode(value.toJSONString());
@@ -442,7 +432,7 @@ class JSEngine extends Object {
     }
   }
 
-  attachEngine(JS_Value result) {
+  attachEngine(JSValue result) {
     result.engine = this;
     return result;
   }
@@ -467,8 +457,8 @@ String typeCheckHelper(dynamic value) {
   if (value is Map) {
     return "Map";
   }
-  if (value is Dart_C_Handler) {
-    return "Dart_C_Handler";
+  if (value is DartCHandler) {
+    return "DartCHandler";
   }
   return "Not_Support";
 }

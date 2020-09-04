@@ -14,11 +14,11 @@ final Pointer Function(Pointer<JSContext> value) getGlobalObject = dylib
 //                            JSAtom *prop, JSValue *val, int flags);
 
 final int Function(
-        Pointer<JSContext> context, Pointer this_obj, Pointer prop, Pointer value, int flags)
+        Pointer<JSContext> context, Pointer thisObj, Pointer prop, Pointer value, int flags)
     definePropertyValue = dylib
         .lookup<
             NativeFunction<
-                Int32 Function(Pointer<JSContext>, Pointer this_obj, Pointer prop, Pointer value,
+                Int32 Function(Pointer<JSContext>, Pointer thisObj, Pointer prop, Pointer value,
                     Int32 flags)>>('definePropertyValue')
         .asFunction();
 
@@ -27,11 +27,11 @@ final int Function(
 //                                       int flags)
 
 final int Function(
-        Pointer<JSContext> context, Pointer this_obj, Pointer prop, Pointer value, int flags)
+        Pointer<JSContext> context, Pointer thisObj, Pointer prop, Pointer value, int flags)
     setPropertyInternal = dylib
         .lookup<
             NativeFunction<
-                Int32 Function(Pointer<JSContext>, Pointer this_obj, Pointer prop, Pointer value,
+                Int32 Function(Pointer<JSContext>, Pointer thisObj, Pointer prop, Pointer value,
                     Int32 flags)>>('setPropertyInternal')
         .asFunction();
 
@@ -39,13 +39,13 @@ final int Function(
 //                    const char *prop, JSValue *val)
 
 final int Function(
-        Pointer<JSContext> context, Pointer this_obj, Pointer<Utf8Fix> prop, Pointer value)
+        Pointer<JSContext> context, Pointer thisObj, Pointer<Utf8Fix> prop, Pointer value)
     setPropertyStr = dylib
         .lookup<
             NativeFunction<
                 Int32 Function(
           Pointer<JSContext>,
-          Pointer this_obj,
+          Pointer thisObj,
           Pointer<Utf8Fix> prop,
           Pointer value,
         )>>('setPropertyStr')
@@ -54,25 +54,25 @@ final int Function(
 // DART_EXTERN_C JSValue *getPropertyStr(JSContext *ctx, JSValueConst *this_obj,
 //                                        const char *prop);
 
-final Pointer Function(Pointer<JSContext> context, Pointer this_obj, Pointer<Utf8Fix> prop)
+final Pointer Function(Pointer<JSContext> context, Pointer thisObj, Pointer<Utf8Fix> prop)
     getPropertyStr = dylib
         .lookup<
             NativeFunction<
                 Pointer Function(
           Pointer<JSContext>,
-          Pointer this_obj,
+          Pointer thisObj,
           Pointer<Utf8Fix> prop,
         )>>('getPropertyStr')
         .asFunction();
 
 // DART_EXTERN_C void setProp(JSContext *ctx, JSValueConst *this_val, JSValueConst *prop_name, JSValueConst *prop_value,int flags);
-final void Function(Pointer<JSContext> context, Pointer this_obj, Pointer prop_name,
-        Pointer prop_value, int flags) setProp =
-    dylib
+final void Function(
+        Pointer<JSContext> context, Pointer thisObj, Pointer propName, Pointer propValue, int flags)
+    setProp = dylib
         .lookup<
             NativeFunction<
-                Void Function(Pointer<JSContext>, Pointer this_obj, Pointer prop_name,
-                    Pointer prop_value, Int32 flags)>>('setProp')
+                Void Function(Pointer<JSContext>, Pointer thisObj, Pointer propName,
+                    Pointer propValue, Int32 flags)>>('setProp')
         .asFunction();
 
 // extractPointer
@@ -97,7 +97,7 @@ final Pointer Function(Pointer argv, int index) getJSValueConstPointer = dylib
     .asFunction();
 
 //  int oper_typeof(JSContext *ctx, JSValue *op1)
-final int Function(Pointer<JSContext> ctx, Pointer val1) oper_typeof = dylib
+final int Function(Pointer<JSContext> ctx, Pointer val1) operTypeof = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer val1)>>('oper_typeof')
     .asFunction();
 
@@ -111,6 +111,6 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Uint8> buf, int len) newA
         .asFunction();
 
 // DART_EXTERN_C JSValue *jsvalue_copy(JSValue *des, JSValue *src)
-final Pointer Function(Pointer des, Pointer src) jsvalue_copy = dylib
+final Pointer Function(Pointer des, Pointer src) jsValueCopy = dylib
     .lookup<NativeFunction<Pointer Function(Pointer des, Pointer src)>>('jsvalue_copy')
     .asFunction();

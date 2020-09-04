@@ -3,130 +3,130 @@ import 'dart:ffi';
 import 'ffi_base.dart';
 import 'util.dart';
 
-final int Function(Pointer value) IsNan =
+final int Function(Pointer value) isNan =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isNan').asFunction();
 // JS_BOOL isNumber(JSValueConst v);
-final int Function(Pointer value) IsNumber =
+final int Function(Pointer value) isNumber =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isNumber').asFunction();
 // JS_BOOL isBigInt(JSContext *ctx, JSValueConst v);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsBigInt = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isBigInt = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer)>>('isBigInt')
     .asFunction();
 // JS_BOOL isBigFloat(JSValueConst v);
-final int Function(Pointer value) IsBigFloat =
+final int Function(Pointer value) isBigFloat =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isBigFloat').asFunction();
 // JS_BOOL isBigDecimal(JSValueConst v);
-final int Function(Pointer value) IsBigDecimal =
+final int Function(Pointer value) isBigDecimal =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isBigDecimal').asFunction();
 // JS_BOOL isBool(JSValueConst v);
-final int Function(Pointer value) IsBool =
+final int Function(Pointer value) isBool =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isBool').asFunction();
 // JS_BOOL isNull(JSValueConst v);
-final int Function(Pointer value) IsNull =
+final int Function(Pointer value) isNull =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isNull').asFunction();
 // JS_BOOL isUndefined(JSValueConst v);
-final int Function(Pointer value) IsUndefined =
+final int Function(Pointer value) isUndefined =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isUndefined').asFunction();
 // JS_BOOL isUninitialized(JSValueConst v);
-final int Function(Pointer value) IsUninitialized =
+final int Function(Pointer value) isUninitialized =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isUninitialized').asFunction();
 // JS_BOOL isString(JSValueConst v);
-final int Function(Pointer value) IsString =
+final int Function(Pointer value) isString =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isString').asFunction();
 // JS_BOOL isSymbol(JSValueConst v);
-final int Function(Pointer value) IsSymbol =
+final int Function(Pointer value) isSymbol =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isSymbol').asFunction();
 // JS_BOOL isObject(JSValueConst v);
-final int Function(Pointer value) IsObject =
+final int Function(Pointer value) isObject =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('isObject').asFunction();
 // JS_BOOL isError(JSContext *ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsError = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isError = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('isError')
     .asFunction();
 // JS_BOOL isFunction(JSContext* ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsFunction = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isFunction = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('isFunction')
     .asFunction();
 // JS_BOOL isConstructor(JSContext* ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsConstructor = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isConstructor = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('isConstructor')
     .asFunction();
 // int isArray(JSContext *ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsArray = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isArray = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('isArray')
     .asFunction();
 // int isExtensible(JSContext *ctx, JSValueConst obj);
-final int Function(Pointer<JSContext> ctx, Pointer value) IsExtensible = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) isExtensible = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('isExtensible')
     .asFunction();
 
 // int getValueTag(JSValue v);
-final int Function(Pointer value) GetValueTag =
+final int Function(Pointer value) getValueTag =
     dylib.lookup<NativeFunction<Int32 Function(Pointer)>>('getValueTag').asFunction();
 // void freeValue(JSContext *ctx, JSValue v);
-final void Function(Pointer<JSContext> ctx, Pointer value) FreeValue = dylib
+final void Function(Pointer<JSContext> ctx, Pointer value) freeValue = dylib
     .lookup<NativeFunction<Void Function(Pointer<JSContext>, Pointer)>>('freeValue')
     .asFunction();
 // void freeValueRT(JSRuntime *rt, JSValue v);
-final void Function(Pointer<JSRuntime> runtime, Pointer value) FreeValueRT = dylib
+final void Function(Pointer<JSRuntime> runtime, Pointer value) freeValueRT = dylib
     .lookup<NativeFunction<Void Function(Pointer<JSRuntime>, Pointer)>>('freeValueRT')
     .asFunction();
 // JSValue dupValue(JSContext *ctx, JSValueConst v);
-final Pointer Function(Pointer<JSContext> ctx, Pointer value) DupValue = dylib
+final Pointer Function(Pointer<JSContext> ctx, Pointer value) dupValue = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Pointer)>>('dupValue')
     .asFunction();
 // JSValue dupValueRT(JSRuntime *rt, JSValueConst v);
-final Pointer Function(Pointer<JSRuntime> runtime, Pointer value) DupValueRT = dylib
+final Pointer Function(Pointer<JSRuntime> runtime, Pointer value) dupValueRT = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSRuntime>, Pointer)>>('dupValueRT')
     .asFunction();
 
 /// transformer
 // int toBool(JSContext *ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) ToBool = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) toBool = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('toBool')
     .asFunction();
 // int toInt32(JSContext *ctx, int32_t *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) ToInt32 = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) toInt32 = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer)>>('toInt32')
     .asFunction();
 // int toUint32(JSContext *ctx, uint32_t *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Uint32> pres, Pointer value) ToUint32 = dylib
+final int Function(Pointer<JSContext> ctx, Pointer<Uint32> pres, Pointer value) toUint32 = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Uint32>, Pointer)>>(
         'toUInt32')
     .asFunction();
 // int toInt64(JSContext *ctx, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer value) ToInt64 = dylib
+final int Function(Pointer<JSContext> ctx, Pointer value) toInt64 = dylib
     .lookup<NativeFunction<Int64 Function(Pointer<JSContext> ctx, Pointer value)>>('toInt64')
     .asFunction();
 // int toIndex(JSContext *ctx, uint64_t *plen, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Uint64> pres, Pointer value) ToIndex = dylib
+final int Function(Pointer<JSContext> ctx, Pointer<Uint64> pres, Pointer value) toIndex = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Uint64>, Pointer)>>('toIndex')
     .asFunction();
 // double toFloat64(JSContext *ctx, double *pres, JSValueConst val);
-final double Function(Pointer<JSContext> ctx, Pointer value) ToFloat64 = dylib
+final double Function(Pointer<JSContext> ctx, Pointer value) toFloat64 = dylib
     .lookup<NativeFunction<Double Function(Pointer<JSContext>, Pointer)>>('toFloat64')
     .asFunction();
 // int toBigInt64(JSContext *ctx, int64_t *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) ToBigInt64 = dylib
+final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) toBigInt64 = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Int64>, Pointer)>>(
         'toBigInt64')
     .asFunction();
 // int toInt64Ext(JSContext *ctx, int64_t *pres, JSValueConst val);
-final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) ToInt64Ext = dylib
+final int Function(Pointer<JSContext> ctx, Pointer<Int64> pres, Pointer value) toInt64Ext = dylib
     .lookup<NativeFunction<Int32 Function(Pointer<JSContext>, Pointer<Int64>, Pointer)>>(
         'toInt64Ext')
     .asFunction();
 // JSValue toString(JSContext *ctx, JSValueConst val);
-final Pointer Function(Pointer<JSContext> ctx, Pointer value) ToString = dylib
+final Pointer Function(Pointer<JSContext> ctx, Pointer value) toString = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Pointer)>>('toString')
     .asFunction();
 // JSValue toPropertyKey(JSContext *ctx, JSValueConst val);
-final Pointer Function(Pointer<JSContext> ctx, Pointer value) ToPropertyKey = dylib
+final Pointer Function(Pointer<JSContext> ctx, Pointer value) toPropertyKey = dylib
     .lookup<NativeFunction<Pointer Function(Pointer<JSContext>, Pointer)>>('toPropertyKey')
     .asFunction();
 // const char *toCStringLen2(JSContext *ctx, size_t *plen, JSValueConst val1, JS_BOOL cesu8);
 final Pointer<Utf8Fix> Function(
-        Pointer<JSContext> ctx, Pointer<Int32> plen, Pointer value1, int cesu8) ToCStringLen2 =
+        Pointer<JSContext> ctx, Pointer<Int32> plen, Pointer value1, int cesu8) toCStringLen2 =
     dylib
         .lookup<
             NativeFunction<
@@ -138,24 +138,24 @@ final Pointer<Utf8Fix> Function(
     Pointer<JSContext> ctx,
     Pointer<Int32> plen,
     Pointer
-        value1) ToCStringLen = dylib
+        value1) toCStringLen = dylib
     .lookup<NativeFunction<Pointer<Utf8Fix> Function(Pointer<JSContext>, Pointer<Int32>, Pointer)>>(
         'toCStringLen')
     .asFunction();
 // const char *toCString(JSContext *ctx, JSValueConst val1);
-final Pointer<Utf8Fix> Function(Pointer<JSContext> ctx, Pointer value1) ToCString = dylib
+final Pointer<Utf8Fix> Function(Pointer<JSContext> ctx, Pointer value1) toCString = dylib
     .lookup<NativeFunction<Pointer<Utf8Fix> Function(Pointer<JSContext>, Pointer)>>('toCString')
     .asFunction();
 
 // void freeCString(JSContext *ctx, const char *ptr);
-final void Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> ptr) FreeCString = dylib
+final void Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> ptr) freeCString = dylib
     .lookup<NativeFunction<Void Function(Pointer<JSContext>, Pointer<Utf8Fix>)>>('freeCString')
     .asFunction();
 
 // JSValue *parseJSON(JSContext *ctx, const char *buf, size_t buf_len,
 //                      const char *filename);
 final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int string_buff_length,
-        Pointer<Utf8Fix> file_name) ParseJSON =
+        Pointer<Utf8Fix> file_name) parseJSON =
     dylib
         .lookup<
             NativeFunction<
@@ -165,7 +165,7 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int
 // JSValue *parseJSON2(JSContext *ctx, const char *buf, size_t buf_len,
 //                       const char *filename, int flags);
 final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int string_buff_length,
-        Pointer<Utf8Fix> file_name, int flags) ParseJSON2 =
+        Pointer<Utf8Fix> file_name, int flags) parseJSON2 =
     dylib
         .lookup<
             NativeFunction<
@@ -178,7 +178,7 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int
         .asFunction();
 // JSValue *JSONStringify(JSContext *ctx, JSValueConst *obj,
 //                          JSValueConst *replacer, JSValueConst *space0);
-final Pointer Function(Pointer<JSContext> ctx, Pointer object) JSONStringify = dylib
+final Pointer Function(Pointer<JSContext> ctx, Pointer object) jsonStringify = dylib
     .lookup<
         NativeFunction<
             Pointer Function(

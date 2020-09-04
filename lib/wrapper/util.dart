@@ -33,18 +33,18 @@ List<int> toArray(String msg, [String enc]) {
   }
 }
 
-Map<String, dynamic> paramsExecutor([List<JS_Value> params]) {
+Map<String, dynamic> paramsExecutor([List<JSValue> params]) {
   if (params != null) {
-    List<int> address_array = params.map<int>((element) {
+    List<int> addressArray = params.map<int>((element) {
       return element.address;
     }).toList();
 
-    final _data = allocate<Pointer<Pointer>>(count: address_array.length);
+    final _data = allocate<Pointer<Pointer>>(count: addressArray.length);
 
-    for (int i = 0; i < address_array.length; ++i) {
-      _data[i] = Pointer.fromAddress(address_array[i]);
+    for (int i = 0; i < addressArray.length; ++i) {
+      _data[i] = Pointer.fromAddress(addressArray[i]);
     }
-    return {"length": address_array.length, "data": _data};
+    return {"length": addressArray.length, "data": _data};
   } else {
     final _data2 = allocate<Pointer<Pointer>>(count: 0);
     return {"length": 0, "data": _data2};

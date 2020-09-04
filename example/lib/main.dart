@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:quickjs_dart/quickjs_dart.dart';
 
+// import 'package:flutter/services.dart' show rootBundle;
+
+// Future<String> loadAsset() async {
+//   return await rootBundle.loadString('assets/js/framework.js');
+// }
+
 void main() {
   JSEngine();
   runApp(MyApp());
@@ -24,11 +30,22 @@ class JSEnginePage extends StatefulWidget {
 class _JSEnginePageState extends State<JSEnginePage> {
   TextEditingController _jsInputController = TextEditingController(text: '1 + 1');
   String _result;
+  // JS_Value _framework;
 
   @override
   void initState() {
     super.initState();
+    // evalFramework();
   }
+
+  // evalFramework() async {
+  //   var jsFile = await loadAsset();
+  //   var framework = JSEngine.instance.evalScript(jsFile);
+  //   print(framework.isValid());
+  //   setState(() {
+  //     _framework = framework;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

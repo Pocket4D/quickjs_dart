@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
+import 'package:quickjs_dart/quickjs_dart.dart';
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
-import '../bindings/ffi_value.dart';
+import '../bindings/ffi_value.dart' as ffiValue;
 import '../bindings/util.dart';
 import '../bindings/ffi_constant.dart';
 import 'engine.dart';
@@ -12,30 +13,43 @@ import 'error.dart';
 import 'function.dart';
 import 'util.dart';
 
-class JS_Value extends Object {
+enum JSValueType {
+  NUMBER,
+  STRING,
+  BOOLEAN,
+  UNDEFINED,
+  NULL,
+  OBJECT,
+  FUNCTION,
+  PROMISE,
+  ARRAY,
+  UNKNOWN
+}
+
+class JSValue extends Object {
   Pointer _ptr;
   Pointer _ctx;
   JSEngine engine;
   Pointer get context => _ctx;
   int get address => _ptr.address;
   Pointer get value => _ptr;
-  int get value_tag => GetValueTag(_ptr);
-  String get value_type => _getValueType();
-  JS_Value get console =>
-      JS_Value(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log");
+  int get valueTag => ffiValue.getValueTag(_ptr);
+  JSValueType get valueType => _getValueType();
+  JSValue get console =>
+      JSValue(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log");
 
-  JS_Value(this._ctx, this._ptr, {this.engine});
+  JSValue(this._ctx, this._ptr, {this.engine});
 
-  JS_Value getProperty(String propertyName) {
-    var val_ptr = getPropertyStr(_ctx, _ptr, Utf8Fix.toUtf8(propertyName));
-    var result = JS_Value(_ctx, val_ptr);
+  JSValue getProperty(String propertyName) {
+    var valPtr = getPropertyStr(_ctx, _ptr, Utf8Fix.toUtf8(propertyName));
+    var result = JSValue(_ctx, valPtr);
     if (engine != null) {
       result.engine = engine;
     }
     return result;
   }
 
-  void setPropertyString(String propertyName, JS_Value property) {
+  void setPropertyString(String propertyName, JSValue property) {
     setPropertyStr(_ctx, _ptr, Utf8Fix.toUtf8(propertyName), property.value);
   }
 
@@ -43,51 +57,71 @@ class JS_Value extends Object {
   ///
   /// ```dart
   /// // say we have a js_obj existed
-  /// js_obj.setPropertyValue("someProp",JS_Value.newInt32(js_obj.context,1),JS_Flags.JS_PROP_C_W_E);
+  /// js_obj.setPropertyValue("someProp",JSValue.newInt32(js_obj.context,1),JS_Flags.JS_PROP_C_W_E);
   /// ```
   /// then we have the object with
   /// ```javascript
   /// {someProp:1}
   /// ```
-  void setPropertyValue(String propertyName, JS_Value value, int flags) {
+  void setPropertyValue(String propertyName, JSValue value, int flags) {
     setPropertyInternal(
-        _ctx, _ptr, newAtom(_ctx, Utf8Fix.toUtf8(propertyName)), value.value, flags);
+        _ctx, _ptr, ffiValue.newAtom(_ctx, Utf8Fix.toUtf8(propertyName)), value.value, flags);
   }
 
-  void setProperty(dynamic prop_name, JS_Value value, {int flags}) {
-    JS_Value _prop_name;
-    if (prop_name is int) {
-      _prop_name = JS_Value.newInt32(_ctx, prop_name);
+  void setProperty(dynamic propName, JSValue value, {int flags}) {
+    JSValue _propName;
+    if (propName is int) {
+      _propName = JSValue.newInt32(_ctx, propName);
     } else {
-      _prop_name = JS_Value.newString(_ctx, prop_name.toString());
+      _propName = JSValue.newString(_ctx, propName.toString());
     }
-    setProp(_ctx, _ptr, _prop_name.value, value.value, flags ?? JSFlags.JS_PROP_THROW);
+    setProp(_ctx, _ptr, _propName.value, value.value, flags ?? JSFlags.JS_PROP_THROW);
   }
 
-  String _getValueType() {
-    return to_string(_ctx, atomToString(_ctx, oper_typeof(_ctx, _ptr)));
+  JSValueType _getValueType() {
+    var typeString = toDartStringVal(_ctx, ffiValue.atomToString(_ctx, operTypeof(_ctx, _ptr)));
+    switch (typeString) {
+      case 'number':
+        return JSValueType.NUMBER;
+      case 'string':
+        return JSValueType.STRING;
+      case 'undefined':
+        return JSValueType.UNDEFINED;
+      case 'null':
+        return JSValueType.NULL;
+      case 'boolean':
+        return JSValueType.BOOLEAN;
+      case 'object':
+        return JSValueType.OBJECT;
+      case 'array':
+        return JSValueType.ARRAY;
+      case 'unknown':
+        return JSValueType.UNKNOWN;
+      default:
+        return JSValueType.UNKNOWN;
+    }
   }
 
-  void addCallback(DartCallback_ cb, [JSEngine js_engine]) {
-    if (this.engine == null && js_engine == null) {
+  void addCallback(DartCallbackClass cb, [JSEngine jsEngine]) {
+    if (this.engine == null && jsEngine == null) {
       throw "Have to attach a JSEngine first";
     }
-    var _engine = this.engine ?? js_engine;
-    _engine?.createNewFunction(cb.name, cb.callback_wrapper, to_val: this);
+    var _engine = this.engine ?? jsEngine;
+    _engine?.createNewFunction(cb.name, cb.callbackWrapper, toVal: this);
   }
 
-  JS_Value invokeObject(String prop_name, [List<JS_Value> params]) {
+  JSValue invokeObject(String propName, [List<JSValue> params]) {
     try {
-      if (!getProperty(prop_name).isFunction()) {
+      if (!getProperty(propName).isFunction()) {
         throw Error();
       }
       Map<String, dynamic> _paramsExecuted = paramsExecutor(params);
-      return JS_Value(
+      return JSValue(
           _ctx,
           invoke(
               _ctx, // context
-              _ptr, // this_val
-              JS_Value.newAtom(_ctx, prop_name).value, // atom
+              _ptr, // thisval
+              JSValue.newAtom(_ctx, propName).value, // atom
               (_paramsExecuted["length"] as int), // argc
               (_paramsExecuted["data"] as Pointer<Pointer>) // argv
               ));
@@ -96,18 +130,18 @@ class JS_Value extends Object {
     }
   }
 
-  JS_Value call_js([List<JS_Value> params]) {
+  JSValue callJS([List<JSValue> params]) {
     try {
       if (!isFunction()) {
         throw Error();
       }
       Map<String, dynamic> _paramsExecuted = paramsExecutor(params);
-      return JS_Value(
+      return JSValue(
           _ctx,
           dartCallJS(
               _ctx, // context
               _ptr, //  this_val
-              newNull(_ctx), // null
+              ffiValue.newNull(_ctx), // null
               (_paramsExecuted["length"] as int), // argc
               (_paramsExecuted["data"] as Pointer<Pointer>) // atgv
               ));
@@ -116,26 +150,26 @@ class JS_Value extends Object {
     }
   }
 
-  List<JS_Value> _toUint8Array_params(List<Object> params_to_encode) {
+  List<JSValue> _toUint8ArrayParams(List<Object> paramsToEncode) {
     try {
       if (!isFunction()) {
         throw Error();
       }
-      List<JS_Value> argvs = List(params_to_encode.length);
-      for (int i = 0; i < params_to_encode.length; ++i) {
-        var params = params_to_encode[i];
-        List<int> params_int_list = toArray(jsonEncode(params));
+      List<JSValue> argvs = List(paramsToEncode.length);
+      for (int i = 0; i < paramsToEncode.length; ++i) {
+        var params = paramsToEncode[i];
+        List<int> paramsIntList = toArray(jsonEncode(params));
 
         // allocate with json string
-        final Pointer<Uint8> pointer = allocate<Uint8>(count: params_int_list.length);
+        final Pointer<Uint8> pointer = allocate<Uint8>(count: paramsIntList.length);
 
         // set pointer value to array value
-        for (int j = 0; j < params_int_list.length; ++j) {
-          pointer[j] = params_int_list[j];
+        for (int j = 0; j < paramsIntList.length; ++j) {
+          pointer[j] = paramsIntList[j];
         }
-        var js_array_buf = newArrayBufferCopy(_ctx, pointer, params_int_list.length);
+        var jsArrayBuf = newArrayBufferCopy(_ctx, pointer, paramsIntList.length);
         // call js object with params
-        JS_Value argv = JS_Value(_ctx, js_array_buf);
+        JSValue argv = JSValue(_ctx, jsArrayBuf);
         argvs[i] = argv;
       }
       return argvs;
@@ -155,14 +189,14 @@ class JS_Value extends Object {
   //   return new Lifetime({ typedArray, ptr }, undefined, value => this.module._free(value.ptr))
   // }
 
-  JS_Value call_js_encode(List<Object> params) {
+  JSValue callJSEncode(List<Object> params) {
     try {
       if (!isFunction()) {
         throw Error();
       }
-      List<JS_Value> argvs = _toUint8Array_params(params);
+      List<JSValue> argvs = _toUint8ArrayParams(params);
 
-      JS_Value callResult = call_js(argvs);
+      JSValue callResult = callJS(argvs);
       // pointer is unsafe allocate in dart heap, have to free manually.
       return callResult;
     } catch (e) {
@@ -171,170 +205,170 @@ class JS_Value extends Object {
   }
 
   /// make a new js_bool
-  JS_Value.newBool(this._ctx, bool b, [this.engine]) {
-    this._ptr = newBool(_ctx, b == true ? 1 : 0);
+  JSValue.newBool(this._ctx, bool b, [this.engine]) {
+    this._ptr = ffiValue.newBool(_ctx, b == true ? 1 : 0);
   }
 
   /// make a new js_null
-  JS_Value.newNull(this._ctx, [this.engine]) {
-    this._ptr = newNull(_ctx);
+  JSValue.newNull(this._ctx, [this.engine]) {
+    this._ptr = ffiValue.newNull(_ctx);
   }
 
   /// make a new js_error
-  JS_Value.newError(this._ctx, [this.engine]) {
-    this._ptr = newError(_ctx);
+  JSValue.newError(this._ctx, [this.engine]) {
+    this._ptr = ffiValue.newError(_ctx);
   }
 
   /// make a new js_int32
-  JS_Value.newInt32(this._ctx, int val, [this.engine]) {
-    this._ptr = newInt32(_ctx, val);
+  JSValue.newInt32(this._ctx, int val, [this.engine]) {
+    this._ptr = ffiValue.newInt32(_ctx, val);
   }
 
   /// make a new js_uint32
-  JS_Value.newUint32(this._ctx, int val, [this.engine]) {
-    this._ptr = newUint32(_ctx, val);
+  JSValue.newUint32(this._ctx, int val, [this.engine]) {
+    this._ptr = ffiValue.newUint32(_ctx, val);
   }
 
   /// make a new js_int64
-  JS_Value.newInt64(this._ctx, int val, [this.engine]) {
-    this._ptr = newInt64(_ctx, val);
+  JSValue.newInt64(this._ctx, int val, [this.engine]) {
+    this._ptr = ffiValue.newInt64(_ctx, val);
   }
 
   /// make a new js_bigInt64
-  JS_Value.newBigInt64(this._ctx, int val, [this.engine]) {
-    this._ptr = newBigInt64(_ctx, val);
+  JSValue.newBigInt64(this._ctx, int val, [this.engine]) {
+    this._ptr = ffiValue.newBigInt64(_ctx, val);
   }
 
   /// make a new js_bigUint64
-  JS_Value.newBigUint64(this._ctx, int val, [this.engine]) {
-    this._ptr = newBigUint64(_ctx, val);
+  JSValue.newBigUint64(this._ctx, int val, [this.engine]) {
+    this._ptr = ffiValue.newBigUint64(_ctx, val);
   }
 
-  JS_Value.newFloat64(this._ctx, double val, [this.engine]) {
-    this._ptr = newFloat64(_ctx, val);
+  JSValue.newFloat64(this._ctx, double val, [this.engine]) {
+    this._ptr = ffiValue.newFloat64(_ctx, val);
   }
 
-  JS_Value.newString(this._ctx, String val, [this.engine]) {
-    this._ptr = newString(_ctx, Utf8Fix.toUtf8(val));
+  JSValue.newString(this._ctx, String val, [this.engine]) {
+    this._ptr = ffiValue.newString(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newAtom(this._ctx, String val, [this.engine]) {
-    this._ptr = newAtom(_ctx, Utf8Fix.toUtf8(val));
+  JSValue.newAtom(this._ctx, String val, [this.engine]) {
+    this._ptr = ffiValue.newAtom(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newAtomString(this._ctx, String val, [this.engine]) {
-    this._ptr = newAtomString(_ctx, Utf8Fix.toUtf8(val));
+  JSValue.newAtomString(this._ctx, String val, [this.engine]) {
+    this._ptr = ffiValue.newAtomString(_ctx, Utf8Fix.toUtf8(val));
   }
 
-  JS_Value.newObject(this._ctx, [this.engine]) {
-    this._ptr = newObject(_ctx);
+  JSValue.newObject(this._ctx, [this.engine]) {
+    this._ptr = ffiValue.newObject(_ctx);
   }
 
-  JS_Value.newArray(this._ctx, [this.engine]) {
-    this._ptr = newArray(_ctx);
+  JSValue.newArray(this._ctx, [this.engine]) {
+    this._ptr = ffiValue.newArray(_ctx);
   }
 
-  static void free_value(Pointer<JSContext> ctx, Pointer val) {
-    FreeValue(ctx, val);
+  static void freeValue(Pointer<JSContext> ctx, Pointer val) {
+    ffiValue.freeValue(ctx, val);
   }
 
-  static bool is_nan(Pointer val) {
-    return IsNan(val) == 0 ? false : true;
+  static bool isValNan(Pointer val) {
+    return ffiValue.isNan(val) == 0 ? false : true;
   }
 
-  static bool is_string(Pointer val) {
-    return IsString(val) == 0 ? false : true;
+  static bool isValString(Pointer val) {
+    return ffiValue.isString(val) == 0 ? false : true;
   }
 
-  static bool is_number(Pointer val) {
-    return IsNumber(val) == 0 ? false : true;
+  static bool isValNumber(Pointer val) {
+    return ffiValue.isNumber(val) == 0 ? false : true;
   }
 
-  static bool is_null(Pointer val) {
-    return IsNull(val) == 0 ? false : true;
+  static bool isValNull(Pointer val) {
+    return ffiValue.isNull(val) == 0 ? false : true;
   }
 
-  static bool is_bool(Pointer val) {
-    return IsBool(val) == 0 ? false : true;
+  static bool isValBool(Pointer val) {
+    return ffiValue.isBool(val) == 0 ? false : true;
   }
 
-  static bool is_object(Pointer val) {
-    return IsObject(val) == 0 ? false : true;
+  static bool isValObject(Pointer val) {
+    return ffiValue.isObject(val) == 0 ? false : true;
   }
 
-  static bool is_symbol(Pointer val) {
-    return IsSymbol(val) == 0 ? false : true;
+  static bool isValSymbol(Pointer val) {
+    return ffiValue.isSymbol(val) == 0 ? false : true;
   }
 
-  static bool is_error(Pointer<JSContext> ctx, Pointer val) {
-    return IsError(ctx, val) == 0 ? false : true;
+  static bool isValError(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isError(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_function(Pointer<JSContext> ctx, Pointer val) {
-    return IsFunction(ctx, val) == 0 ? false : true;
+  static bool isValFunction(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isFunction(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_constructor(Pointer<JSContext> ctx, Pointer val) {
-    return IsConstructor(ctx, val) == 0 ? false : true;
+  static bool isValConstructor(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isConstructor(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_undefined(Pointer val) {
-    return IsUndefined(val) == 0 ? false : true;
+  static bool isValUndefined(Pointer val) {
+    return ffiValue.isUndefined(val) == 0 ? false : true;
   }
 
-  static bool is_uninitialized(Pointer val) {
-    return IsUninitialized(val) == 0 ? false : true;
+  static bool isValUninitialized(Pointer val) {
+    return ffiValue.isUninitialized(val) == 0 ? false : true;
   }
 
-  static bool is_bigInt(Pointer<JSContext> ctx, Pointer val) {
-    return IsBigInt(ctx, val) == 0 ? false : true;
+  static bool isValBigInt(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isBigInt(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_bigFloat(Pointer val) {
-    return IsBigFloat(val) == 0 ? false : true;
+  static bool isValBigFloat(Pointer val) {
+    return ffiValue.isBigFloat(val) == 0 ? false : true;
   }
 
-  static bool is_bigDecimal(Pointer val) {
-    return IsBigDecimal(val) == 0 ? false : true;
+  static bool isValBigDecimal(Pointer val) {
+    return ffiValue.isBigDecimal(val) == 0 ? false : true;
   }
 
-  static bool is_array(Pointer<JSContext> ctx, Pointer val) {
-    return IsArray(ctx, val) == 0 ? false : true;
+  static bool isValArray(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isArray(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_extensible(Pointer<JSContext> ctx, Pointer val) {
-    return IsExtensible(ctx, val) == 0 ? false : true;
+  static bool isValExtensible(Pointer<JSContext> ctx, Pointer val) {
+    return ffiValue.isExtensible(ctx, val) == 0 ? false : true;
   }
 
-  static bool is_promise_value(Pointer<JSContext> ctx, Pointer val) {
-    return JS_Value(ctx, val).getProperty("then").isFunction();
+  static bool isValPromise(Pointer<JSContext> ctx, Pointer val) {
+    return JSValue(ctx, val).getProperty("then").isFunction();
   }
 
-  static Pointer to_jsString(Pointer<JSContext> ctx, Pointer val) {
+  static Pointer toJSStringVal(Pointer<JSContext> ctx, Pointer val) {
     try {
-      if (JS_Value(ctx, val).value_type == "unknown") {
+      if (JSValue(ctx, val).valueType == JSValueType.UNKNOWN) {
         throw Error();
       }
-      return ToString(ctx, val);
+      return ffiValue.toString(ctx, val);
     } catch (e) {
       throw QuickJSError.typeError("unknown").throwError();
     }
   }
 
-  static String to_string(Pointer<JSContext> ctx, Pointer val) {
+  static String toDartStringVal(Pointer<JSContext> ctx, Pointer val) {
     try {
-      return Utf8Fix.fromUtf8(ToCString(ctx, val));
+      return Utf8Fix.fromUtf8(ffiValue.toCString(ctx, val));
     } catch (e) {
       throw e;
     }
   }
 
-  static String to_JSONString(Pointer<JSContext> ctx, Pointer val) {
+  static String toJSONStringVal(Pointer<JSContext> ctx, Pointer val) {
     try {
-      if (JS_Value(ctx, val).value_type == "unknown") {
+      if (JSValue(ctx, val).valueType == JSValueType.UNKNOWN) {
         throw Error();
       }
-      return JS_Value.to_string(ctx, JSONStringify(ctx, val));
+      return JSValue.toDartStringVal(ctx, ffiValue.jsonStringify(ctx, val));
     } catch (e) {
       throw QuickJSError.typeError("unknown").throwError();
     }
@@ -342,94 +376,94 @@ class JS_Value extends Object {
 
   /// determine if value is `NaN`
   bool isNan() {
-    return is_nan(_ptr);
+    return isValNan(_ptr);
   }
 
   /// determine if value is `string`
   bool isString() {
-    return is_string(_ptr);
+    return isValString(_ptr);
   }
 
   /// determine if value is `number`
   bool isNumber() {
-    return is_number(_ptr);
+    return isValNumber(_ptr);
   }
 
   /// determine if value is `null`
   bool isNull() {
-    return is_null(_ptr);
+    return isValNull(_ptr);
   }
 
   bool isObject() {
-    return is_object(_ptr);
+    return isValObject(_ptr);
   }
 
   /// determine if value is `undefined`
   bool isUndefined() {
-    return is_undefined(_ptr);
+    return isValUndefined(_ptr);
   }
 
   /// determine if value is `bool`
   bool isBool() {
-    return is_bool(_ptr);
+    return isValBool(_ptr);
   }
 
   bool isError() {
-    return is_error(_ctx, _ptr);
+    return isValError(_ctx, _ptr);
   }
 
   bool isConstructor() {
-    return is_constructor(_ctx, _ptr);
+    return isValConstructor(_ctx, _ptr);
   }
 
   bool isFunction() {
-    return is_function(_ctx, _ptr);
+    return isValFunction(_ctx, _ptr);
   }
 
   /// determine if value is `bool`
   bool isSymbol() {
-    return is_symbol(_ptr);
+    return isValSymbol(_ptr);
   }
 
   /// determine if value is `uninitialized`
   bool isUninitialized() {
-    return is_uninitialized(_ptr);
+    return isValUninitialized(_ptr);
   }
 
   /// determine if value is `bigInt`
   bool isBigInt() {
-    return is_bigInt(_ctx, _ptr);
+    return isValBigInt(_ctx, _ptr);
   }
 
   /// determine if value is `bigFloat`
   bool isBigFloat() {
-    return is_bigFloat(_ptr);
+    return isValBigFloat(_ptr);
   }
 
   /// determine if value is `bigDecimal`
   bool isBigDecimal() {
-    return is_bigDecimal(_ptr);
+    return isValBigDecimal(_ptr);
   }
 
   bool isArray() {
-    return is_array(_ctx, _ptr);
+    return isValArray(_ctx, _ptr);
   }
 
   bool isExtensible() {
-    return is_extensible(_ctx, _ptr);
+    return isValExtensible(_ctx, _ptr);
   }
 
   bool isPromise() {
-    return is_promise_value(_ctx, _ptr);
+    return isValPromise(_ctx, _ptr);
   }
 
   bool isValid() {
-    return value_type != "unknown" ? true : false;
+    return valueType != JSValueType.UNKNOWN ? true : false;
   }
 
   Pointer toJSString() {
     try {
-      return to_jsString(_ctx, _ptr);
+      return toJSStringVal(_ctx, _ptr);
     } catch (e) {
       throw e;
     }
@@ -437,34 +471,34 @@ class JS_Value extends Object {
 
   String toDartString() {
     try {
-      return to_string(_ctx, _ptr);
+      return toDartStringVal(_ctx, _ptr);
     } catch (e) {
       throw e;
     }
   }
 
   void free() {
-    free_value(_ctx, _ptr);
+    freeValue(_ctx, _ptr);
   }
 
   Pointer copy() {
-    return DupValue(_ctx, _ptr);
+    return ffiValue.dupValue(_ctx, _ptr);
   }
 
   String toJSONString() {
     try {
-      return to_JSONString(_ctx, _ptr);
+      return toJSONStringVal(_ctx, _ptr);
     } catch (e) {
       throw e;
     }
   }
 
-  JS_Value js_print({String prepend_message, JS_Value value}) {
-    var prependString = prepend_message ?? null;
+  JSValue jsPrint({String prependMessage, JSValue value}) {
+    var prependString = prependMessage ?? null;
     if (prependString == null) {
-      return console.call_js([value ?? this]);
+      return console.callJS([value ?? this]);
     }
-    return console.call_js([JS_Value.newString(_ctx, prepend_message), value ?? this]);
+    return console.callJS([JSValue.newString(_ctx, prependMessage), value ?? this]);
   }
 
   void dispose() {
