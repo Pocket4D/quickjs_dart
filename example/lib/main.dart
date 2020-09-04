@@ -35,7 +35,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Quickjs Example'),
         ),
         body: Column(
           mainAxisAlignment: MainAxisAlignment.start,
