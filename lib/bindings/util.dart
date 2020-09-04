@@ -8,10 +8,17 @@ final iosLibName = "quickjs.framework/quickjs";
 
 final dylib = Platform.isAndroid
     ? DynamicLibrary.open(androidlibName)
-    : Platform.isIOS ? DynamicLibrary.open(iosLibName) : DynamicLibrary.open("vm/libquickjs.dylib");
+    : Platform.isIOS
+        ? DynamicLibrary.open(iosLibName)
+        : Platform.isMacOS
+            ? DynamicLibrary.open("vm/libquickjs.dylib")
+            : Platform.isLinux
+                ? DynamicLibrary.open("vm/libquickjs.so")
+                : Platform.isWindows
+                    ? DynamicLibrary.open("vm/libquickjs.dll")
+                    : DynamicLibrary.open("vm/libquickjs.dylib");
 
 // Must Fix Utf8 because QuickJS need end with terminator '\0'
-
 class Utf8Fix extends Struct {
   @Uint8()
   int char;
