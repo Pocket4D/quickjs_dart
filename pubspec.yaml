@@ -2,7 +2,7 @@ name: quickjs_dart
 description: A new flutter plugin project.
 version: 0.0.1
 author: neeboo
-homepage: 'github.pocket4d.io'
+homepage: 'pocket4d.io'
 
 environment:
   sdk: '>=2.7.0 <3.0.0'

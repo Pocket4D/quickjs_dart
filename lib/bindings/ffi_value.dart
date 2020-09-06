@@ -154,27 +154,23 @@ final void Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> ptr) freeCString = 
 
 // JSValue *parseJSON(JSContext *ctx, const char *buf, size_t buf_len,
 //                      const char *filename);
-final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int string_buff_length,
-        Pointer<Utf8Fix> file_name) parseJSON =
+final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> stringBuff, int stringBuffLength,
+        Pointer<Utf8Fix> fileName) parseJSON =
     dylib
         .lookup<
             NativeFunction<
-                Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff,
-                    Int32 string_buff_length, Pointer<Utf8Fix> file_name)>>('parseJSON')
+                Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> stringBuff,
+                    Int32 stringBuffLength, Pointer<Utf8Fix> fileName)>>('parseJSON')
         .asFunction();
 // JSValue *parseJSON2(JSContext *ctx, const char *buf, size_t buf_len,
 //                       const char *filename, int flags);
-final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> string_buff, int string_buff_length,
-        Pointer<Utf8Fix> file_name, int flags) parseJSON2 =
+final Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> stringBuff, int stringBuffLength,
+        Pointer<Utf8Fix> fileName, int flags) parseJSON2 =
     dylib
         .lookup<
             NativeFunction<
-                Pointer Function(
-                    Pointer<JSContext> ctx,
-                    Pointer<Utf8Fix> string_buff,
-                    Int32 string_buff_length,
-                    Pointer<Utf8Fix> file_name,
-                    Int32 flages)>>('parseJSON2')
+                Pointer Function(Pointer<JSContext> ctx, Pointer<Utf8Fix> stringBuff,
+                    Int32 stringBuffLength, Pointer<Utf8Fix> fileName, Int32 flages)>>('parseJSON2')
         .asFunction();
 // JSValue *JSONStringify(JSContext *ctx, JSValueConst *obj,
 //                          JSValueConst *replacer, JSValueConst *space0);
@@ -244,12 +240,12 @@ final Pointer Function(Pointer<JSContext> context, int val) atomToValue = dylib
     .asFunction();
 
 // JSValue newObjectProtoClass(JSContext *ctx, JSValueConst proto, JSClassID class_id);
-final Pointer Function(Pointer<JSContext> ctx, Pointer proto, int class_id) newObjectProtoClass =
+final Pointer Function(Pointer<JSContext> ctx, Pointer proto, int classId) newObjectProtoClass =
     dylib
         .lookup<NativeFunction<Pointer Function(Pointer, Pointer, Uint32)>>('newObjectProtoClass')
         .asFunction();
-// JSValue newObjectClass(JSContext *ctx, int class_id);
-final Pointer Function(Pointer<JSContext> ctx, int class_id) newObjectClass =
+// JSValue newObjectClass(JSContext *ctx, int classId);
+final Pointer Function(Pointer<JSContext> ctx, int classId) newObjectClass =
     dylib.lookup<NativeFunction<Pointer Function(Pointer, Uint32)>>('newObjectClass').asFunction();
 
 // JSValue newObjectProto(JSContext *ctx, JSValueConst proto);

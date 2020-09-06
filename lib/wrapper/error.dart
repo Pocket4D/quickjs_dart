@@ -8,14 +8,14 @@ class QuickJSError {
   }
   String throwError() {
     var _common = "JSEngine Error";
-    var _ret_string;
+    var _retString;
     switch (_error) {
       case QuickJS_Errors.TypeError:
         {
-          _ret_string = ("$_common # JSValue TypeError, message: type is $_message");
+          _retString = ("$_common # JSValue TypeError, message: type is $_message");
           break;
         }
     }
-    return _ret_string;
+    return _retString;
   }
 }
