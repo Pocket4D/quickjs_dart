@@ -29,7 +29,9 @@ enum JSValueType {
 class JSValue extends Object {
   Pointer _ptr;
   Pointer _ctx;
+  bool _isFreed = false;
   JSEngine engine;
+  bool get isFreed => _isFreed;
   Pointer get context => _ctx;
   int get address => _ptr.address;
   Pointer get value => _ptr;
@@ -268,10 +270,6 @@ class JSValue extends Object {
     this._ptr = ffiValue.newArray(_ctx);
   }
 
-  static void freeValue(Pointer<JSContext> ctx, Pointer val) {
-    ffiValue.freeValue(ctx, val);
-  }
-
   static bool isValNan(Pointer val) {
     return ffiValue.isNan(val) == 0 ? false : true;
   }
@@ -479,6 +477,7 @@ class JSValue extends Object {
 
   void free() {
     freeValue(_ctx, _ptr);
+    _isFreed = true;
   }
 
   Pointer copy() {

@@ -114,3 +114,9 @@ final Pointer Function(Pointer<JSContext> ctx, Pointer<Uint8> buf, int len) newA
 final Pointer Function(Pointer des, Pointer src) jsValueCopy = dylib
     .lookup<NativeFunction<Pointer Function(Pointer des, Pointer src)>>('jsvalue_copy')
     .asFunction();
+
+/// DART_EXTERN_C int setPrototype(JSContext *ctx, JSValueConst *obj, JSValueConst *proto_val);
+final int Function(Pointer<JSContext> ctx, Pointer obj, Pointer protoVal) setPrototype = dylib
+    .lookup<NativeFunction<Int32 Function(Pointer<JSContext> ctx, Pointer obj, Pointer protoVal)>>(
+        'setPrototype')
+    .asFunction();

@@ -194,6 +194,10 @@ class JSEngine extends Object {
     _thisVal.free();
   }
 
+  bool setProtoType(JSValue receiver, JSValue value) {
+    return setPrototype(_ctx, receiver.value, value.value) == 1 ? true : false;
+  }
+
   JSValue callFunction(JSValue jsFunction, JSValue thisVal, [List<JSValue> args]) {
     Map<String, dynamic> _paramsExecuted = paramsExecutor(args);
     Pointer callResult = call(_ctx, jsFunction.value, thisVal.value,
