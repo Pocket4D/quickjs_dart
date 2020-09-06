@@ -194,8 +194,15 @@ class JSEngine extends Object {
     _thisVal.free();
   }
 
-  bool setProtoType(JSValue receiver, JSValue value) {
-    return setPrototype(_ctx, receiver.value, value.value) == 1 ? true : false;
+  JSValue setProtoType(JSValue receiver, JSValue value) {
+    try {
+      if (setPrototype(_ctx, receiver.value, value.value) == 1) {
+        return receiver;
+      }
+      throw 'setProtoType faild';
+    } catch (e) {
+      throw e;
+    }
   }
 
   JSValue callFunction(JSValue jsFunction, JSValue thisVal, [List<JSValue> args]) {
