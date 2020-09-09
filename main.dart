@@ -72,12 +72,10 @@ main() async {
   var testAddCallback = DartCallback(
       engine: engine,
       name: "testAdd",
-      handler: (args, context, thisVal) async {
-        var some = await getNetworkData(args[0] as int, () => args[0] + 1);
-        // var kkk = await getNetworkData(args[0] as int, () => "${args[1]} is my string");
-        // print("arg2 result :$kkk");
+      handler: (args, engine, thisVal) async {
+        int waitNum = engine.fromJSVal(args[0]);
+        var some = await getNetworkData(waitNum, () => (waitNum + 1));
         return some;
-        // await wait2(2);
       });
 
   // 1.2 create function to global object
@@ -118,10 +116,10 @@ testCallJS(JSEngine engine) async {
   /// use `dart_callJS` to call, with encoded Uint8Array
   good.callJSEncode(sss);
 
-  /// get sub-object from `testAny`
+  // /// get sub-object from `testAny`
   var twoParams = testAny.getProperty("twoParams");
 
-  /// send multi params to this function
+  // /// send multi params to this function
   twoParams.callJS([engine.newString("i am good"), engine.newInt32(2)]);
 
   /// get sub-object from `testAny`
@@ -141,7 +139,8 @@ testCallJS(JSEngine engine) async {
       engine: engine,
       name: "some",
       handler: (args, context, thisVal) {
-        return args[1];
+        var some = args[0];
+        return some;
       });
 
   // // this time add it to some js object;
@@ -150,6 +149,8 @@ testCallJS(JSEngine engine) async {
   // // call the function use ffi;
   testAny.getProperty("some").callJS([engine.newInt32(2), engine.newFloat64(4.33)]).jsPrint(
       prependMessage: "dart call js is:");
+
+  // print(engine.fromJSVal(engine.evalScript("Object.keys").callJS([(testAny as JSValue)])));
 
   // // 2.1 test the previous added function
   engine.evalScript(

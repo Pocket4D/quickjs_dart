@@ -99,6 +99,8 @@ class JSValue extends Object {
         return JSValueType.ARRAY;
       case 'unknown':
         return JSValueType.UNKNOWN;
+      case 'function':
+        return JSValueType.FUNCTION;
       default:
         return JSValueType.UNKNOWN;
     }
@@ -214,6 +216,11 @@ class JSValue extends Object {
   /// make a new js_null
   JSValue.newNull(this._ctx, [this.engine]) {
     this._ptr = ffiValue.newNull(_ctx);
+  }
+
+  /// make a new js_null
+  JSValue.newUndefined(this._ctx, [this.engine]) {
+    this._ptr = ffiValue.newUndefined(_ctx);
   }
 
   /// make a new js_error

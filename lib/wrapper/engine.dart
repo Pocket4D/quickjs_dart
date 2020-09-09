@@ -70,6 +70,7 @@ class JSEngine extends Object {
     setGlobalObject("global");
     _setGlobalPromiseGetter();
     _registerDartFP();
+    setGlobalConsole();
   }
 
   JSEngine.loop(JSEngine engine) {
@@ -100,8 +101,8 @@ class JSEngine extends Object {
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<
-        Void Function(Pointer<JSContext> ctx, Pointer thisVal, Int32 argc, Pointer argv,
-            Pointer funcData, Pointer resultPtr)>(callBackWrapper);
+        Pointer Function(Pointer<JSContext> ctx, Pointer thisVal, Int32 argc, Pointer argv,
+            Pointer funcData)>(callBackWrapper);
     registerDartCallbackFP(dartCallbackPointer);
   }
 
@@ -110,6 +111,50 @@ class JSEngine extends Object {
 
     /// TODO :get own property first, to see if it is registered
     globalObj.setPropertyString(globalString, globalObj);
+  }
+
+  void setGlobalConsole() {
+    var globalObj = _globalObject();
+
+    globalObj.addCallback(DartCallback(
+        engine: this,
+        name: "__console_write",
+        handler: (args, engine, thisVal) {
+          if (args.length > 1) {
+            var tag = engine.fromJSVal(args[0]) as String;
+            var newList = args.sublist(1).map((element) {
+              return fromJSVal(element);
+            }).toList();
+            print("js console.$tag: ${newList.join(" ")}");
+          } else {
+            var newList2 = args.map((element) {
+              return fromJSVal(element);
+            }).toList();
+            print("js console.${newList2.join(" ")}");
+          }
+        }));
+    evalScript(r"""
+      globalThis.console = {
+                trace: (...args) => {
+                    globalThis.__console_write("trace", ...args);
+                },
+                debug: (...args) => {
+                    globalThis.__console_write("debug", ...args);
+                },
+                log: (...args) => {
+                    globalThis.__console_write("log", ...args);
+                },
+                info: (...args) => {
+                    globalThis.__console_write("info", ...args);
+                },
+                warn: (...args) => {
+                    globalThis.__console_write("warn", ...args);
+                },
+                error: (...args) => {
+                    globalThis.__console_write("error", ...args);
+                },
+            };
+      """);
   }
 
   bool hasPendingJobs() {
@@ -144,7 +189,7 @@ class JSEngine extends Object {
       });
       return result;
     };
-    createPromise;
+    createPromise
   """;
     var func = evalScript(str);
     global.setProperty(globalPromiseGetter, func, flags: JSFlags.JS_PROP_THROW);
@@ -171,8 +216,8 @@ class JSEngine extends Object {
     installDartHook(_ctx, toVal?.value ?? global.value, Utf8Fix.toUtf8(funcName), handlerId);
   }
 
-  static void callBackWrapper(Pointer<JSContext> ctx, Pointer thisVal, int argc, Pointer argv,
-      Pointer funcData, Pointer resultPtr) {
+  static Pointer callBackWrapper(
+      Pointer<JSContext> ctx, Pointer thisVal, int argc, Pointer argv, Pointer funcData) {
     final int handlerId = ffiValue.toInt64(ctx, funcData);
     final DartCHandler handler = dartHandlerMap[handlerId];
 
@@ -186,22 +231,16 @@ class JSEngine extends Object {
 
     JSValue _thisVal = JSValue(ctx, thisVal);
 
-    handler(context: ctx, thisVal: _thisVal, args: _args, resultPtr: resultPtr);
-
-    _args.forEach((element) {
-      element.free();
-    });
-    _thisVal.free();
+    return handler(context: ctx, thisVal: _thisVal, args: _args);
   }
 
   JSValue setProtoType(JSValue receiver, JSValue value) {
     try {
-      if (setPrototype(_ctx, receiver.value, value.value) == 1) {
-        return receiver;
-      }
-      throw 'setProtoType faild';
+      setPrototype(_ctx, receiver.value, value.value);
+      return attachEngine(receiver);
+      // throw 'setProtoType faild';
     } catch (e) {
-      throw e;
+      throw 'setProtoType faild';
     }
   }
 
@@ -251,6 +290,10 @@ class JSEngine extends Object {
 
   JSValue newNull() {
     return JSValue.newNull(_ctx, this);
+  }
+
+  JSValue newUndefined() {
+    return JSValue.newUndefined(_ctx, this);
   }
 
   /// make a new js_nul
@@ -436,10 +479,12 @@ class JSEngine extends Object {
           if (value.isArray() || value.isObject()) {
             return jsonDecode(value.toJSONString());
           }
-          throw 'not supported';
+          return value;
         }
+      case JSValueType.FUNCTION:
+        return value;
       default:
-        throw 'not supported';
+        return value;
     }
   }
 

@@ -11,7 +11,7 @@ set(quickjs_src
     ${PROJECT_SOURCE_DIR}/../src/quickjs/libunicode.c 
     ${PROJECT_SOURCE_DIR}/../src/quickjs/libregexp.c 
     ${PROJECT_SOURCE_DIR}/../src/quickjs/cutils.c 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs/quickjs-libc.c 
+    # ${PROJECT_SOURCE_DIR}/../src/quickjs/quickjs-libc.c 
     ${PROJECT_SOURCE_DIR}/../src/quickjs-ffi.cc)
 set(quickjs_def CONFIG_VERSION="${version}" _GNU_SOURCE)
 

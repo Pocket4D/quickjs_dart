@@ -146,7 +146,7 @@ DART_EXTERN_C void (*Dart_ExitScope_DL)();
 DART_EXPORT intptr_t Dart_InitializeApiDL(void *data);
 
 // dart handled callback
-typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data,JSValue *result);
+typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv, JSValue *func_data);
 // global one time release
 dart_handle_func dart_callback_ = nullptr;
 

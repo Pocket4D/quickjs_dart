@@ -257,3 +257,7 @@ final Pointer Function(Pointer<JSContext> ctx) newObject =
 // JSValue newArray(JSContext *ctx);
 final Pointer Function(Pointer<JSContext> ctx) newArray =
     dylib.lookup<NativeFunction<Pointer Function(Pointer)>>('newArray').asFunction();
+
+// JSValue newUndefined(JSContext *ctx);
+final Pointer Function(Pointer<JSContext> ctx) newUndefined =
+    dylib.lookup<NativeFunction<Pointer Function(Pointer)>>('newUndefined').asFunction();

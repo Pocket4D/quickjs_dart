@@ -1,14 +1,14 @@
 import 'dart:ffi';
 import 'package:meta/meta.dart';
+import 'package:quickjs_dart/quickjs_dart.dart';
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import 'value.dart';
 import 'engine.dart';
 
-typedef DartCHandler(
-    {Pointer<JSContext> context, JSValue thisVal, List<JSValue> args, Pointer resultPtr});
+typedef DartCHandler({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
 
-typedef DartFunctionHandler(List args, Pointer<JSContext> context, JSValue thisVal);
+typedef DartFunctionHandler(List<JSValue> args, JSEngine engine, JSValue thisVal);
 
 // ignore: camel_case_types
 abstract class DartCallbackClass {
@@ -21,30 +21,33 @@ abstract class DartCallbackClass {
 
   DartCallbackClass(this.engine, this.name, this.handler);
 
-  wrapperFunc({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args, Pointer resultPtr});
+  wrapperFunc({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
 }
 
 class DartCallback implements DartCallbackClass {
   DartCallback({@required this.engine, @required this.name, @required this.handler});
 
-  void wrapperFunc(
-      {Pointer<JSContext> context, JSValue thisVal, List<JSValue> args, Pointer resultPtr}) {
+  Pointer wrapperFunc({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args}) {
     try {
-      List _dartArgs =
-          args != null ? args.map((element) => engine.fromJSVal(element)).toList() : null;
-      var handlerResult = handler(_dartArgs, context, thisVal);
-      // print(handlerResult);
+      // List _dartArgs =
+      //     args != null ? args.map((element) => engine.fromJSVal(element)).toList() : null;
+      var handlerResult = handler(args, engine, thisVal);
+
+      // print("handler result is $handlerResult");
       if (handlerResult == null) {
-        jsValueCopy(resultPtr, engine.newNull().value);
-        return;
+        return engine.newUndefined().value;
       } else {
         if (!(handlerResult is Future)) {
-          jsValueCopy(resultPtr, engine.toJSVal(handlerResult).value);
-          return;
+          if (handlerResult is JSValue) {
+            return dupValue(engine.context, handlerResult.value);
+          } else {
+            return engine.toJSVal(handlerResult).value;
+          }
         }
         var newPromise = engine.globalPromise.callJS(null);
         handlerResult.then((value) {
-          newPromise.getProperty("resolve").callJS([engine.toJSVal(value)]);
+          newPromise.getProperty("resolve").callJS(
+              [(value is JSValue) ? dupValue(engine.context, value.value) : engine.toJSVal(value)]);
           newPromise.free();
           JSEngine.loop(engine);
         }).catchError((e) {
@@ -52,8 +55,7 @@ class DartCallback implements DartCallbackClass {
           newPromise.free();
           JSEngine.loop(engine);
         });
-        jsValueCopy(resultPtr, newPromise.getProperty("promise").value);
-        return;
+        return newPromise.getProperty("promise").value;
       }
     } catch (e) {
       throw e;
