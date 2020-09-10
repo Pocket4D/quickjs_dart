@@ -129,54 +129,53 @@ class JSEngine extends Object {
           if (args.length > 1) {
             var tag = engine.fromJSVal(args[0]) as String;
             var newList = args.sublist(1).map((element) {
-              return element.toJSONString().replaceAll("\\", "");
+              return trimQuote(element.toJSONString().replaceAll(new RegExp(r'\\'), ''));
             }).toList();
+            print(newList[0]);
             switch (tag) {
               case 'trace':
                 {
-                  logger.wtf("js console.$tag: ${newList.join("")}");
+                  logger.wtf("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               case 'debug':
                 {
-                  logger.d("js console.$tag: ${newList.join("")}");
+                  logger.d("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               case 'log':
                 {
-                  logger.v("js console.$tag: ${newList.join("")}");
+                  logger.v("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               case 'info':
                 {
-                  logger.i("js console.$tag: ${newList.join("")}");
+                  logger.i("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               case 'warn':
                 {
-                  logger.w("js console.$tag: ${newList.join("")}");
+                  logger.w("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               case 'error':
                 {
-                  logger.e("js console.$tag: ${newList.join("")}");
+                  logger.e("JSEngine console.$tag: ${newList.join()}");
                   break;
                 }
               default:
-                logger.v("js console.$tag: ${newList.join("")}");
+                logger.v("JSEngine console.$tag: ${newList.join()}");
                 break;
             }
             if (printConsole) {
-              print("js console.$tag: ${newList.join("")}");
+              print("JSEngine console.$tag: ${newList.join()}");
             }
-            ;
           } else {
             var tag = engine.fromJSVal(args[0]) as String;
-            logger.v("js console.$tag: ");
+            logger.v("JSEngine console.$tag: ");
             if (printConsole) {
-              print("js console.$tag: ");
+              print("JSEngine console.$tag: ");
             }
-            ;
           }
         }));
     evalScript(r"""

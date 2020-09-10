@@ -76,6 +76,16 @@ class PrefixPrinter extends LogPrinter {
 
 Logger logger = Logger(
   printer: PrefixPrinter(HybridPrinter(
-      PrettyPrinter(methodCount: 2, colors: false, printTime: true, printEmojis: true),
+      PrettyPrinter(methodCount: 0, colors: false, printTime: true, printEmojis: true),
       debug: SimplePrinter())), //OneLinePrinter(),
 );
+
+String trimQuote(String fdId) {
+  if (fdId.indexOf("\"") == 0) {
+    fdId = fdId.substring(1, fdId.length); //去掉第一个 "
+  }
+  if (fdId.lastIndexOf("\"") == (fdId.length - 1)) {}
+  fdId = fdId.substring(0, fdId.length - 1); //去掉最后一个 "
+
+  return fdId;
+}

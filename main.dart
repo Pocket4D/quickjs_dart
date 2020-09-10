@@ -60,6 +60,7 @@ function Utf8ArrayToStr(array) {
 
 ''';
 
+/// A emulator for requesting network data
 Future getNetworkData(int s, Function func) {
   return Future.delayed(Duration(seconds: s), func);
 }
@@ -67,8 +68,8 @@ Future getNetworkData(int s, Function func) {
 main() async {
   final engine = JSEngine(options: JSEngineOptions(printConsole: true));
 
-  // 1. add global function before eval script
-  // 1.1 create an callback wrapper
+  /// 1. add global function before eval script
+  /// 1.1 create an callback wrapper
   var testAddCallback = DartCallback(
       engine: engine,
       name: "testAdd",
@@ -78,25 +79,19 @@ main() async {
         return some;
       });
 
-  // 1.2 create function to global object
+  /// 1.2 create function to global object
   engine.createNewFunction(testAddCallback.name, testAddCallback.callbackWrapper);
 
-  // engine.evalScript(r"""global.testAdd(1,"2").then(val=>console.log(`js testAdd(1) : ${val}`));""");
-
-  // 2. eval the global script;
+  /// 2. eval the global script;
   engine.evalScript(jsCode);
 
-  // 3. test another batch of script
-
+  /// 3. test another batch of script
   await testCallJS(engine);
 
-  // await getNetworkData(1, () => engine.newString('123').js_print())
-  //     .then((value) => engine.newString('456').js_print());
-
-  // 4. loop the engine to make sure async result are executed
+  /// 4. loop the engine to make sure async result are executed
   JSEngine.loop(engine);
 
-  // 5 .stop the engine, should be place to flutter widget's `dispose` method;
+  /// 5 .stop the engine, should be place to flutter widget's `dispose` method;
   // JSEngine.stop(engine);
 }
 
@@ -116,16 +111,16 @@ testCallJS(JSEngine engine) async {
   /// use `dart_callJS` to call, with encoded Uint8Array
   good.callJSEncode(sss);
 
-  // /// get sub-object from `testAny`
+  /// get sub-object from `testAny`
   var twoParams = testAny.getProperty("twoParams");
 
-  // /// send multi params to this function
+  /// send multi params to this function
   twoParams.callJS([engine.newString("i am good"), engine.newInt32(2)]);
 
   /// get sub-object from `testAny`
   var bad = testAny.getProperty("bad");
 
-  // /// call function 4 times, orignally is 1;
+  /// call function 4 times, orignally is 1;
   bad.callJS([engine.newInt32(1)]);
   bad.callJS([engine.newInt32(1)]);
   bad.callJS([engine.newInt32(1)]);
@@ -134,7 +129,7 @@ testCallJS(JSEngine engine) async {
 
   print("js staticVal is : ${staticVal.toDartString()}");
 
-  // // added another callback function
+  /// added another callback function
   var some = DartCallback(
       engine: engine,
       name: "some",
@@ -143,16 +138,14 @@ testCallJS(JSEngine engine) async {
         return some;
       });
 
-  // // this time add it to some js object;
+  /// this time add it to some js object;
   testAny.addCallback(some);
 
-  // // call the function use ffi;
+  /// call the function use ffi;
   testAny.getProperty("some").callJS([engine.newInt32(2), engine.newFloat64(4.33)]).jsPrint(
       prependMessage: "dart call js is:");
 
-  // print(engine.fromJSVal(engine.evalScript("Object.keys").callJS([(testAny as JSValue)])));
-
-  // // 2.1 test the previous added function
+  /// 2.1 test the previous added function
   engine.evalScript(
       r"""global.testAdd(1,"2").then(val=>console.log(`js async callback testAdd(1,"2")  : ${val}`));""");
 }
