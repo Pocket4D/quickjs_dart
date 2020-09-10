@@ -60,8 +60,19 @@ void main(){
 
 1. build quickjs lib for ios/android/dartVM
    ```bash
-   sh ~/.build.sh
+   sh ~/.build_all.sh
    ```
+
+   or build android only
+   ```bash
+   sh ~/.build_android.sh
+   ```
+
+   or bulid ios only
+   ```bash
+   sh ~/.build_ios.sh
+   ```
+
 2. run dart on dart vm
    ```dart
     dart main.dart

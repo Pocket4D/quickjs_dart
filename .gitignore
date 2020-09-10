@@ -3,11 +3,11 @@
 .idea/
 .fvm/
 .vscode/
-
 .packages
 
 
 # make files
+/build/
 
 /cpp/android/build/
 /cpp/android/CMakeFiles/

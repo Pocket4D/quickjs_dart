@@ -65,7 +65,7 @@ Future getNetworkData(int s, Function func) {
 }
 
 main() async {
-  final engine = JSEngine();
+  final engine = JSEngine(options: JSEngineOptions(printConsole: true));
 
   // 1. add global function before eval script
   // 1.1 create an callback wrapper
@@ -102,7 +102,7 @@ main() async {
 
 testCallJS(JSEngine engine) async {
   /// get global object with `testAny`;
-  var testAny = engine.global.getProperty("testAny");
+  var testAny = JSEngine.instance.global.getProperty("testAny");
 
   /// get sub-object from `testAny`
   var good = testAny.getProperty("good");

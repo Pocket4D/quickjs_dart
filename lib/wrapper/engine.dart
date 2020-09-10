@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ffi';
+import 'package:logger/logger.dart' hide PrefixPrinter;
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
@@ -14,6 +15,18 @@ extension on num {
   bool get isInt => this % 1 == 0;
 }
 
+var logger = Logger(
+  printer: PrefixPrinter(HybridPrinter(
+      PrettyPrinter(methodCount: 2, colors: false, printTime: true, printEmojis: true),
+      debug: SimplePrinter())), //OneLinePrinter(),
+);
+
+class JSEngineOptions {
+  bool printConsole;
+  String globalString;
+  JSEngineOptions({this.printConsole = false, this.globalString = "global"});
+}
+
 Map<int, DartCHandler> dartHandlerMap;
 
 final String globalPromiseGetter = "__promise__getter";
@@ -22,20 +35,20 @@ class JSEngine extends Object {
   static JSEngine _instance;
 
   /// 内部构造方法，可避免外部暴露构造函数，进行实例化
-  JSEngine._internal() {
+  JSEngine._internal({JSEngineOptions options}) {
     _rt = newRuntime();
     _ctx = newContext(_rt);
-    init();
+    init(options: options);
   }
 
-  factory JSEngine() => _getInstance();
-  static JSEngine get instance => _getInstance();
+  factory JSEngine({JSEngineOptions options}) => _getInstance(options: options);
+  static JSEngine get instance => _instance;
 
   /// 获取单例内部方法
-  static _getInstance() {
+  static _getInstance({JSEngineOptions options}) {
     // 只能有一个实例
     if (_instance == null) {
-      _instance = JSEngine._internal();
+      _instance = JSEngine._internal(options: options);
     }
     return _instance;
   }
@@ -65,12 +78,12 @@ class JSEngine extends Object {
   ///  JSEngine.start({JSEngineConfig config})
   /// ```
 
-  init() {
+  init({JSEngineOptions options}) {
     // initDartAPI();
-    setGlobalObject("global");
+    setGlobalObject(options?.globalString ?? "global");
     _setGlobalPromiseGetter();
     _registerDartFP();
-    setGlobalConsole();
+    setGlobalConsole(options?.printConsole ?? false);
   }
 
   JSEngine.loop(JSEngine engine) {
@@ -113,7 +126,7 @@ class JSEngine extends Object {
     globalObj.setPropertyString(globalString, globalObj);
   }
 
-  void setGlobalConsole() {
+  void setGlobalConsole([bool printConsole = false]) {
     var globalObj = _globalObject();
 
     globalObj.addCallback(DartCallback(
@@ -123,14 +136,54 @@ class JSEngine extends Object {
           if (args.length > 1) {
             var tag = engine.fromJSVal(args[0]) as String;
             var newList = args.sublist(1).map((element) {
-              return fromJSVal(element);
+              return element.toJSONString().replaceAll("\\", "");
             }).toList();
-            print("js console.$tag: ${newList.join(" ")}");
+            switch (tag) {
+              case 'trace':
+                {
+                  logger.wtf("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              case 'debug':
+                {
+                  logger.d("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              case 'log':
+                {
+                  logger.v("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              case 'info':
+                {
+                  logger.i("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              case 'warn':
+                {
+                  logger.w("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              case 'error':
+                {
+                  logger.e("js console.$tag: ${newList.join("")}");
+                  break;
+                }
+              default:
+                logger.v("js console.$tag: ${newList.join("")}");
+                break;
+            }
+            if (printConsole) {
+              print("js console.$tag: ${newList.join("")}");
+            }
+            ;
           } else {
-            var newList2 = args.map((element) {
-              return fromJSVal(element);
-            }).toList();
-            print("js console.${newList2.join(" ")}");
+            var tag = engine.fromJSVal(args[0]) as String;
+            logger.v("js console.$tag: ");
+            if (printConsole) {
+              print("js console.$tag: ");
+            }
+            ;
           }
         }));
     evalScript(r"""
