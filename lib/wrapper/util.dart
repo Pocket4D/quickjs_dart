@@ -84,8 +84,10 @@ String trimQuote(String fdId) {
   if (fdId.indexOf("\"") == 0) {
     fdId = fdId.substring(1, fdId.length); //去掉第一个 "
   }
-  if (fdId.lastIndexOf("\"") == (fdId.length - 1)) {}
-  fdId = fdId.substring(0, fdId.length - 1); //去掉最后一个 "
+  if (fdId.lastIndexOf("\"") == (fdId.length - 1)) {
+    fdId = fdId.substring(0, fdId.length - 1);
+  }
+  //去掉最后一个 "
 
   return fdId;
 }

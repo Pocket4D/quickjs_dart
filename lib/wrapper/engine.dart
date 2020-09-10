@@ -129,46 +129,45 @@ class JSEngine extends Object {
           if (args.length > 1) {
             var tag = engine.fromJSVal(args[0]) as String;
             var newList = args.sublist(1).map((element) {
-              return trimQuote(element.toJSONString().replaceAll(new RegExp(r'\\'), ''));
+              return trimQuote(element.toJSONString().replaceAll('\\', ''));
             }).toList();
-            print(newList[0]);
             switch (tag) {
               case 'trace':
                 {
-                  logger.wtf("JSEngine console.$tag: ${newList.join()}");
+                  logger.wtf("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               case 'debug':
                 {
-                  logger.d("JSEngine console.$tag: ${newList.join()}");
+                  logger.d("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               case 'log':
                 {
-                  logger.v("JSEngine console.$tag: ${newList.join()}");
+                  logger.v("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               case 'info':
                 {
-                  logger.i("JSEngine console.$tag: ${newList.join()}");
+                  logger.i("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               case 'warn':
                 {
-                  logger.w("JSEngine console.$tag: ${newList.join()}");
+                  logger.w("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               case 'error':
                 {
-                  logger.e("JSEngine console.$tag: ${newList.join()}");
+                  logger.e("JSEngine console.$tag: ${newList.join('')}");
                   break;
                 }
               default:
-                logger.v("JSEngine console.$tag: ${newList.join()}");
+                logger.v("JSEngine console.$tag: ${newList.join('')}");
                 break;
             }
             if (printConsole) {
-              print("JSEngine console.$tag: ${newList.join()}");
+              print("JSEngine console.$tag: ${newList.join('')}");
             }
           } else {
             var tag = engine.fromJSVal(args[0]) as String;
