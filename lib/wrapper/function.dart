@@ -2,7 +2,6 @@ import 'dart:ffi';
 import 'package:meta/meta.dart';
 import 'package:quickjs_dart/quickjs_dart.dart';
 import '../bindings/ffi_base.dart';
-import '../bindings/ffi_util.dart';
 import 'value.dart';
 import 'engine.dart';
 

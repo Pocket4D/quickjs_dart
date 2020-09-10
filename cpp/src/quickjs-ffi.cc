@@ -171,12 +171,13 @@ InvokeDartCallback(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst
 }
 
 // todo: func_name should be JSValue and atom = valuetoAtom
-DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id)
+DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, JSValueConst *func_name, int64_t func_id)
 {
     JSValue cfn = JS_NewCFunctionData(ctx, &InvokeDartCallback, 0, 0, 1, newInt64(ctx, func_id));
     JSValue dupped = JS_DupValue(ctx, cfn);
-    JSAtom atom = JS_NewAtom(ctx, func_name);
-    definePropertyValue(ctx, this_val, &atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
+    // JSAtom atom = JS_NewAtom(ctx, func_name);
+    JSAtom *atom = valueToAtom(ctx, func_name);
+    definePropertyValue(ctx, this_val, atom, &dupped, JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
 }
 
 // todo: func_name should be JSValue and atom = valuetoAtom, func_data should be JSValue(Object:{port_id:handler:id})

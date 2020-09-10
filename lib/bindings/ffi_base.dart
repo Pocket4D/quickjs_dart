@@ -363,11 +363,11 @@ final evalFunctionName = "evalFunction";
 final evalFunctionFunc evalFunction =
     dylib.lookup<NativeFunction<evalFunctionNative>>(evalFunctionName).asFunction();
 
-/// DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *funcName, JSValue* fun_data)
+/// DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, JSValueConst *funcName, JSValue* fun_data)
 typedef installDartHookFunc = void Function(
-    Pointer<JSContext> ctx, Pointer thisVal, Pointer<Utf8Fix> funcName, int funcId);
+    Pointer<JSContext> ctx, Pointer thisVal, Pointer funcName, int funcId);
 typedef installDartHookNative = Void Function(
-    Pointer<JSContext> ctx, Pointer thisVal, Pointer<Utf8Fix> funcName, Int64 funcId);
+    Pointer<JSContext> ctx, Pointer thisVal, Pointer funcName, Int64 funcId);
 final installDartHookName = "installDartHook";
 final installDartHookFunc installDartHook =
     dylib.lookup<NativeFunction<installDartHookNative>>(installDartHookName).asFunction();

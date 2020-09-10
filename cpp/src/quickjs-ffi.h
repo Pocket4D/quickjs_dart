@@ -150,7 +150,7 @@ typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int
 dart_handle_func dart_callback_ = nullptr;
 
 // hook dart
-DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, const char *func_name, int64_t func_id);
+DART_EXTERN_C void installDartHook(JSContext *ctx, JSValueConst *this_val, JSValueConst *func_name, int64_t func_id);
 
 DART_EXTERN_C JSValueConst *getJSValueConstPointer(JSValueConst *argv, int index);
 

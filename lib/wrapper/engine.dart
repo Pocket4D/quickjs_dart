@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:ffi';
-import 'package:logger/logger.dart' hide PrefixPrinter;
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
@@ -14,12 +13,6 @@ import 'function.dart';
 extension on num {
   bool get isInt => this % 1 == 0;
 }
-
-var logger = Logger(
-  printer: PrefixPrinter(HybridPrinter(
-      PrettyPrinter(methodCount: 2, colors: false, printTime: true, printEmojis: true),
-      debug: SimplePrinter())), //OneLinePrinter(),
-);
 
 class JSEngineOptions {
   bool printConsole;
@@ -255,7 +248,18 @@ class JSEngine extends Object {
   ///
   /// create a function with name, and handler, attach it to some value;
   ///
-  createNewFunction(String funcName, DartCHandler handler, {JSValue toVal}) {
+  createNewFunction(dynamic funcName, DartCHandler handler, {JSValue toVal}) {
+    JSValue funcNameValue;
+    if (!(funcName is String) && !(funcName is int)) {
+      throw 'Only String or int for funcName is supported';
+    }
+    if (funcName is String) {
+      funcNameValue = newString(funcName);
+    }
+    if (funcName is int) {
+      funcNameValue = newInt32(funcName);
+    }
+
     if (_nextFuncHandlerId == null) {
       _nextFuncHandlerId = 0;
     }
@@ -266,7 +270,7 @@ class JSEngine extends Object {
     }
     dartHandlerMap.putIfAbsent(handlerId, () => handler);
 
-    installDartHook(_ctx, toVal?.value ?? global.value, Utf8Fix.toUtf8(funcName), handlerId);
+    installDartHook(_ctx, toVal?.value ?? global.value, funcNameValue.value, handlerId);
   }
 
   static Pointer callBackWrapper(
@@ -425,9 +429,7 @@ class JSEngine extends Object {
           jsArray.setProperty(i, subMap);
           break;
         case "DartCHandler":
-          // TODO: should we support this?
-          // createNewFunction(i, (value as DartCHandler), toVal: jsArray);
-          throw "${value.runtimeType} is not supported";
+          createNewFunction(i, (value as DartCHandler), toVal: jsArray);
           break;
         case "Not_Support":
           throw "${value.runtimeType} is not supported";
@@ -464,9 +466,7 @@ class JSEngine extends Object {
           jsObj.setProperty(key, subMap);
           break;
         case "DartCHandler":
-          // loop this function
           createNewFunction(key, (value as DartCHandler), toVal: jsObj);
-          // throw "${value.runtimeType} is not supported";
           break;
         case "Not_Support":
           throw "${value.runtimeType} is not supported";

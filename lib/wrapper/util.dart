@@ -73,3 +73,9 @@ class PrefixPrinter extends LogPrinter {
     return _realPrinter.log(event).map((s) => '${_prefixMap[event.level]}$s').toList();
   }
 }
+
+Logger logger = Logger(
+  printer: PrefixPrinter(HybridPrinter(
+      PrettyPrinter(methodCount: 2, colors: false, printTime: true, printEmojis: true),
+      debug: SimplePrinter())), //OneLinePrinter(),
+);
