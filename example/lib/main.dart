@@ -78,8 +78,8 @@ class _JSEnginePageState extends State<JSEnginePage> {
               height: 60,
               onPressed: () {
                 // print(_jsInputController);
-                var toEvalString = _jsInputController.text;
-                var jsVal = JSEngine.instance.evalScript("$toEvalString");
+                var toEvalString = _jsInputController.text.replaceAll(RegExp("[“”‘’]"), "\"");
+                var jsVal = JSEngine.instance.evalScript(toEvalString);
                 if (!jsVal.isValid()) {
                   showDialog(
                     context: context,
