@@ -3,7 +3,7 @@ import 'dart:ffi';
 
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
-import '../bindings/util.dart';
+import '../bindings/ffi_helpers.dart';
 import '../bindings/ffi_value.dart' as ffiValue;
 import '../bindings/ffi_constant.dart';
 import 'util.dart';
@@ -264,7 +264,7 @@ class JSEngine extends Object {
     final int handlerId = ++_nextFuncHandlerId;
 
     if (dartHandlerMap == null) {
-      dartHandlerMap = new Map();
+      dartHandlerMap = Map();
     }
     dartHandlerMap.putIfAbsent(handlerId, () => handler);
 

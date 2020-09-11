@@ -6,13 +6,14 @@ import 'package:quickjs_dart/quickjs_dart.dart';
 import '../bindings/ffi_base.dart';
 import '../bindings/ffi_util.dart';
 import '../bindings/ffi_value.dart' as ffiValue;
-import '../bindings/util.dart';
+import '../bindings/ffi_helpers.dart';
 import '../bindings/ffi_constant.dart';
 import 'engine.dart';
 import 'error.dart';
 import 'function.dart';
 import 'util.dart';
 
+/// JSValueTypes for type reference
 enum JSValueType {
   NUMBER,
   STRING,
@@ -25,6 +26,15 @@ enum JSValueType {
   ARRAY,
   UNKNOWN
 }
+
+/// JSValue has complex definitions(struct) in C, when defining the JSValue in dart,
+/// We are interested in it's type and transformation, like `toDart` or `toJSVal`
+/// Each `JSValue` has it's own value, which is Pointer of C, here we simplifying the process of Pointer converting
+/// We just use `JSValue` to hold the pointer, until it is released in C
+/// To see if the pointer is released, simply use `JSValue.isFreed`
+/// In practical, we use `JSEngine` to create JSValue or receive `JSValue` instead of using this class directly
+/// Because in `JSEngine` we have `JSContext` complete life-time management,
+/// and we don't want to pass `JSContext` and `Pointer` of `JSValue` as parameter everytime.
 
 class JSValue extends Object {
   Pointer _ptr;
@@ -181,17 +191,6 @@ class JSValue extends Object {
       throw QuickJSError.typeError("not Function").throwError();
     }
   }
-
-  // private newMutablePointerArray(
-  //   length: number
-  // ): Lifetime<{ typedArray: Int32Array; ptr: JSValuePointerPointer }> {
-  //   const zeros = new Int32Array(new Array(length).fill(0))
-  //   const numBytes = zeros.length * zeros.BYTES_PER_ELEMENT
-  //   const ptr = this.module._malloc(numBytes) as JSValuePointerPointer
-  //   const typedArray = new Int32Array(this.module.HEAPU8.buffer, ptr, length)
-  //   typedArray.set(zeros)
-  //   return new Lifetime({ typedArray, ptr }, undefined, value => this.module._free(value.ptr))
-  // }
 
   JSValue callJSEncode(List<Object> params) {
     try {

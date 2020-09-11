@@ -41,7 +41,6 @@ class Utf8Fix extends Struct {
       ptr.elementAt(i).ref.char = units[i];
     }
     // Add the C string null terminator '\0'
-
     ptr.elementAt(units.length).ref.char = 0;
 
     return ptr;

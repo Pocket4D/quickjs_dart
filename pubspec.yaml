@@ -1,5 +1,5 @@
 name: quickjs_dart
-description: A new flutter plugin project.
+description: A dart binding and JSEngine for QuickJS, using Dart:FFI
 version: 0.0.1
 homepage: 'https://github.com/Pocket4D/quickjs_dart'
 

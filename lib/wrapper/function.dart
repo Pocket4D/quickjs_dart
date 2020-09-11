@@ -5,9 +5,9 @@ import '../bindings/ffi_base.dart';
 import 'value.dart';
 import 'engine.dart';
 
-typedef DartCHandler({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
+typedef DartCHandler = Function({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
 
-typedef DartFunctionHandler(List<JSValue> args, JSEngine engine, JSValue thisVal);
+typedef DartFunctionHandler = Function(List<JSValue> args, JSEngine engine, JSValue thisVal);
 
 // ignore: camel_case_types
 abstract class DartCallbackClass {
