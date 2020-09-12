@@ -9,7 +9,7 @@ final iosLibName = "quickjs.framework/quickjs";
 final dylib = Platform.isAndroid
     ? DynamicLibrary.open(androidlibName)
     : Platform.isIOS
-        ? DynamicLibrary.open(iosLibName)
+        ? DynamicLibrary.process()
         : Platform.isMacOS
             ? DynamicLibrary.open("vm/libquickjs.dylib")
             : Platform.isLinux
