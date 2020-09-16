@@ -24,12 +24,11 @@ Map<int, DartCHandler> dartHandlerMap;
 
 final String globalPromiseGetter = "__promise__getter";
 
-class JSEngine extends Object {
+class JSEngine {
   static JSEngine _instance;
 
   /// 内部构造方法，可避免外部暴露构造函数，进行实例化
   JSEngine._internal({JSEngineOptions options}) {
-    _rt = newRuntime();
     _ctx = newContext(_rt);
     init(options: options);
   }
@@ -47,7 +46,7 @@ class JSEngine extends Object {
   }
 
   /// runtime pointer
-  Pointer<JSRuntime> _rt;
+  final Pointer<JSRuntime> _rt = newRuntime();
 
   /// context pointer
   Pointer<JSContext> _ctx;
@@ -93,17 +92,6 @@ class JSEngine extends Object {
     freeContext(_rt);
     freeRuntime(_rt);
   }
-
-  /// Dart Api for Dynamic link, should place before function call
-  /// TODO: Should we keep this?
-  // void initDartAPI() {
-  //   final initializeApi =
-  //       dylib.lookupFunction<IntPtr Function(Pointer<Void>), int Function(Pointer<Void>)>(
-  //           "Dart_InitializeApiDL");
-  //   if (initializeApi(NativeApi.initializeApiDLData) != 0) {
-  //     throw "Failed to initialize Dart API";
-  //   }
-  // }
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<

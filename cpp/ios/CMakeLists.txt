@@ -33,7 +33,6 @@ set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "ghostcorn@gmail.com (RR2MJFF7AJ)" CA
 # add_library(some STATIC ${SRC_FILES})
 # compile settings
 add_library(quickjs SHARED ${quickjs_src})
-target_compile_options(quickjs PRIVATE -fblocks)
 target_compile_definitions(quickjs PRIVATE ${quickjs_def} )
 
 set_target_properties(quickjs PROPERTIES

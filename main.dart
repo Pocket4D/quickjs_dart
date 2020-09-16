@@ -86,7 +86,7 @@ main() async {
   engine.evalScript(jsCode);
 
   /// 3. test another batch of script
-  await testCallJS(engine);
+  await testCallJS();
 
   /// 4. loop the engine to make sure async result are executed
   JSEngine.loop(engine);
@@ -95,9 +95,11 @@ main() async {
   // JSEngine.stop(engine);
 }
 
-testCallJS(JSEngine engine) async {
+testCallJS() async {
+  var engine = JSEngine.instance;
+
   /// get global object with `testAny`;
-  var testAny = JSEngine.instance.global.getProperty("testAny");
+  var testAny = engine.global.getProperty("testAny");
 
   /// get sub-object from `testAny`
   var good = testAny.getProperty("good");

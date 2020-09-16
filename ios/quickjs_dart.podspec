@@ -18,11 +18,11 @@ A new flutter plugin project.
   s.platform = :ios, '8.0'
 
   # Flutter.framework does not contain a i386 slice. Only x86_64 simulators are supported.
-  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64','OTHER_LDFLAGS'=>'-force_load -framework quickjs.framework' }
+  s.pod_target_xcconfig = {'DEFINES_MODULE' => 'YES','VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64'}
   # s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES','VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64 armv7 arm64','OTHER_LDFLAGS'=>'-framework quickjs.framework' }
-  s.swift_version = '5.0'
-  s.preserve_path='quickjs.framework'
+  # s.swift_version = '5.0'
+  # s.preserve_path='quickjs.framework'
   s.vendored_frameworks = 'quickjs.framework'
-  s.static_framework = true
-  s.library = 'c++'
+  s.static_framework = false
+  # s.library = 'c++'
 end

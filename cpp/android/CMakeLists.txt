@@ -36,7 +36,6 @@ endif()
 
 # compile settings
 add_library(quickjs SHARED ${quickjs_src})
-target_compile_options(quickjs PRIVATE -fblocks)
 target_compile_definitions(quickjs PRIVATE ${quickjs_def} )
 
 

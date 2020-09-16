@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:quickjs_dart/quickjs_dart.dart';
 
-// import 'package:flutter/services.dart' show rootBundle;
-
-// Future<String> loadAsset() async {
-//   return await rootBundle.loadString('assets/js/framework.js');
-// }
-
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   JSEngine();
   runApp(MyApp());
+  JSEngine.loop(JSEngine.instance);
 }
 
 class MyApp extends StatelessWidget {
@@ -35,17 +31,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
   @override
   void initState() {
     super.initState();
-    // evalFramework();
   }
-
-  // evalFramework() async {
-  //   var jsFile = await loadAsset();
-  //   var framework = JSEngine.instance.evalScript(jsFile);
-  //   print(framework.isValid());
-  //   setState(() {
-  //     _framework = framework;
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +66,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
                 // print(_jsInputController);
                 var toEvalString = _jsInputController.text.replaceAll(RegExp("[“”‘’]"), "\"");
                 var jsVal = JSEngine.instance.evalScript(toEvalString);
+
                 if (!jsVal.isValid()) {
                   showDialog(
                     context: context,
@@ -116,6 +103,6 @@ class _JSEnginePageState extends State<JSEnginePage> {
   @override
   dispose() {
     super.dispose();
-    JSEngine.instance.stop();
+    // JSEngine.instance.stop();
   }
 }

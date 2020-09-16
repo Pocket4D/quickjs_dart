@@ -52,7 +52,7 @@ DEF(throw, "throw")
 DEF(try, "try")
 DEF(catch, "catch")
 DEF(finally, "finally")
-DEF(function, "function") //27
+DEF(function, "function")
 DEF(debugger, "debugger")
 DEF(with, "with")
 /* FutureReservedWord */
@@ -100,7 +100,7 @@ DEF(set, "set")
 DEF(of, "of")
 DEF(__proto__, "__proto__")
 DEF(undefined, "undefined")
-DEF(number, "number") // 70
+DEF(number, "number")
 DEF(boolean, "boolean")
 DEF(string, "string")
 DEF(object, "object")
