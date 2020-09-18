@@ -14,7 +14,7 @@ set(quickjs_def CONFIG_VERSION="${version}" _GNU_SOURCE)
 
 
 # android setting
-set(CMAKE_SYSTEM_VERSION 21)
+set(CMAKE_SYSTEM_VERSION 16)
 set(CMAKE_ANDROID_STL_TYPE c++_shared)  # https://blog.csdn.net/fpcc/article/details/72820934
 set(CMAKE_BUILD_TYPE DEBUG) # 指定生成的版本。RELEASE
 set(CMAKE_CXX_STANDARD 11) # c++标准

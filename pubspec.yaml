@@ -1,6 +1,6 @@
 name: quickjs_dart
 description: A dart binding and JSEngine for QuickJS, using Dart:FFI
-version: 0.0.2
+version: 0.0.3
 homepage: 'https://github.com/Pocket4D/quickjs_dart'
 
 environment:
