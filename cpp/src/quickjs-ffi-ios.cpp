@@ -8,7 +8,7 @@
 // #include <zconf.h>
 
 // #include "quickjs-libc.h"
-#include "quickjs.h"
+#include "quickjs/quickjs.h"
 // #include "quickjs-ffi.h"
 
 /* ---------------------------------------- */
@@ -20,7 +20,7 @@ enum
     JS_ATOM_NULL,
 #define DEF(name, str) JS_ATOM_##name,
 
-#include "quickjs-atom.h"
+#include "quickjs/quickjs-atom.h"
 
 #undef DEF
     JS_ATOM_END,
@@ -31,7 +31,7 @@ enum
 static const char js_atom_init[] = {
 #define DEF(name, str) str "\0"
 
-#include "quickjs-atom.h"
+#include "quickjs/quickjs-atom.h"
 
 #undef DEF
 };
