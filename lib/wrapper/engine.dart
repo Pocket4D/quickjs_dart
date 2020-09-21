@@ -27,8 +27,20 @@ final String globalPromiseGetter = "__promise__getter";
 class JSEngine {
   static JSEngine _instance;
 
+  /// runtime pointer
+  Pointer<JSRuntime> _rt;
+
+  /// context pointer
+  Pointer<JSContext> _ctx;
+
+  /// context getter
+  Pointer<JSContext> get context => _ctx;
+
+  Pointer<JSRuntime> get runtime => _rt;
+
   /// 内部构造方法，可避免外部暴露构造函数，进行实例化
   JSEngine._internal({JSEngineOptions options}) {
+    _rt = newRuntime();
     _ctx = newContext(_rt);
     init(options: options);
   }
@@ -44,17 +56,6 @@ class JSEngine {
     }
     return _instance;
   }
-
-  /// runtime pointer
-  final Pointer<JSRuntime> _rt = newRuntime();
-
-  /// context pointer
-  Pointer<JSContext> _ctx;
-
-  /// context getter
-  Pointer<JSContext> get context => _ctx;
-
-  Pointer<JSRuntime> get runtime => _rt;
 
   /// global object getter
   JSValue get global => _globalObject();
@@ -89,7 +90,7 @@ class JSEngine {
   }
 
   void stop() {
-    freeContext(_rt);
+    freeContext(_ctx);
     freeRuntime(_rt);
   }
 
@@ -270,7 +271,9 @@ class JSEngine {
 
     List<JSValue> _args = argc > 1
         ? List.generate(argc, (index) => JSValue(ctx, getJSValueConstPointer(argv, index)))
-        : argc == 1 ? [JSValue(ctx, argv)] : null;
+        : argc == 1
+            ? [JSValue(ctx, argv)]
+            : null;
 
     JSValue _thisVal = JSValue(ctx, thisVal);
 
@@ -311,8 +314,8 @@ class JSEngine {
   }
 
   JSValue evalScript(String jsString) {
-    var ptr = eval(context, Utf8Fix.toUtf8(jsString), jsString.length);
-    return attachEngine(JSValue(context, ptr));
+    var ptr = eval(dupContext(_ctx), Utf8Fix.toUtf8(jsString), jsString.length);
+    return attachEngine(JSValue(dupContext(_ctx), ptr));
   }
 
   void jsPrint(JSValue val) {

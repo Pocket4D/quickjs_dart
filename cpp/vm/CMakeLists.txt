@@ -1,29 +1,28 @@
-cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-
-set(CMAKE_CXX_STANDARD 11) # c++标准
-set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -frtti -fexceptions")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../../vm)
-
+cmake_minimum_required(VERSION 3.6.0)
 project(quickjs VERSION 1.0.0 LANGUAGES C CXX)
-file(STRINGS VERSION version)
-set(quickjs_src 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs/quickjs.c 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs/libunicode.c 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs/libregexp.c 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs/cutils.c 
-    # ${PROJECT_SOURCE_DIR}/../src/quickjs/quickjs-libc.c 
-    ${PROJECT_SOURCE_DIR}/../src/quickjs-ffi.cc)
-set(quickjs_def CONFIG_VERSION="${version}" _GNU_SOURCE)
 
-# BigNum setting
-option(QUICKJS_BIGNUM "Compile BigNum support" ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -DANDROID_STL=c++_static -DANDROID_TOOLCHAIN=clang -DDEBUGGER_SERVER_PORT=${DEBUGGER_SERVER_PORT}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DQUICKJS")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../../vm)
+include_directories(
+    ${PROJECT_SOURCE_DIR}/../src/quickjs
+)
+add_library( quickjs
 
-if(QUICKJS_BIGNUM)
-   list(APPEND quickjs_src ${CMAKE_SOURCE_DIR}/../src/quickjs/libbf.c)
-   list(APPEND quickjs_def CONFIG_BIGNUM)
-endif()
+             # Sets the library as a shared library.
+             SHARED
 
-add_library(quickjs SHARED ${quickjs_src})
-target_compile_options(quickjs PRIVATE -fblocks)
-target_compile_definitions(quickjs PRIVATE ${quickjs_def} )
+             # Provides a relative path to your source file(s).
+             ${PROJECT_SOURCE_DIR}/../src/quickjs-ffi.cpp
+
+             ${PROJECT_SOURCE_DIR}/../src/quickjs/cutils.c
+             ${PROJECT_SOURCE_DIR}/../src/quickjs/libregexp.c
+             ${PROJECT_SOURCE_DIR}/../src/quickjs/libunicode.c
+             ${PROJECT_SOURCE_DIR}/../src/quickjs/quickjs.c
+             ${PROJECT_SOURCE_DIR}/../src/quickjs/libbf.c
+    )
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DCONFIG_VERSION=\\\"2020-07-05\\\"")
+
+target_link_libraries(quickjs)
 

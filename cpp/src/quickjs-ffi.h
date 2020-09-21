@@ -28,12 +28,15 @@
 #ifndef QUICKJS_FFI_H
 #define QUICKJS_FFI_H
 
-#include <cstdio>
-#include <cstdlib>
-#include "quickjs/quickjs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "quickjs.h"
 
 extern "C"
 {
+  JSRuntime *newRuntime();
+
+  JSContext *newContext(JSRuntime *rt);
   // dart handled callback
   typedef JSValue *(*dart_handle_func)(JSContext *ctx, JSValueConst *this_val, int argc, JSValueConst *argv,
                                        JSValue *func_data);
@@ -74,7 +77,7 @@ extern "C"
 
   JS_BOOL detectModule(const char *input, size_t input_len);
 
-  JSValue *eval(JSContext *ctx, char *input, size_t input_len);
+  JSValue *eval(JSContext *ctx, const char *input, size_t input_len);
 
   JSValue *evalFunction(JSContext *ctx, JSValue *fun_obj);
 
@@ -284,6 +287,8 @@ extern "C"
 
   int setPropertyStr(JSContext *ctx, JSValueConst *this_obj,
                      const char *prop, JSValue *val);
+
+  void setProp(JSContext *ctx, JSValueConst *this_val, JSValueConst *prop_name, JSValueConst *prop_value, int flags);
 
   int hasProperty(JSContext *ctx, JSValueConst *this_obj, const JSAtom *prop);
 

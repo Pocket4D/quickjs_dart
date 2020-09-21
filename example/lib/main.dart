@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:quickjs_dart/quickjs_dart.dart';
 
@@ -6,6 +7,7 @@ void main() {
   JSEngine();
   runApp(MyApp());
   JSEngine.loop(JSEngine.instance);
+  JSEngine.stop(JSEngine.instance);
 }
 
 class MyApp extends StatelessWidget {
@@ -27,6 +29,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
   TextEditingController _jsInputController = TextEditingController(text: '1 + 1');
   String _result;
   // JS_Value _framework;
+  Pointer<JSContext> ctx;
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
 
   @override
   Widget build(BuildContext context) {
+    var ctx = newContext(newRuntime());
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
@@ -65,6 +69,7 @@ class _JSEnginePageState extends State<JSEnginePage> {
               onPressed: () {
                 // print(_jsInputController);
                 var toEvalString = _jsInputController.text.replaceAll(RegExp("[“”‘’]"), "\"");
+
                 var jsVal = JSEngine.instance.evalScript(toEvalString);
 
                 if (!jsVal.isValid()) {
@@ -103,6 +108,5 @@ class _JSEnginePageState extends State<JSEnginePage> {
   @override
   dispose() {
     super.dispose();
-    // JSEngine.instance.stop();
   }
 }

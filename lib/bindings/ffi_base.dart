@@ -15,13 +15,16 @@ class JSContext extends Struct {}
 /// typedef struct JSClass JSClass;
 class JSClass extends Struct {}
 
+// typefdef struct JSValueConst
+class JSValueConst extends Struct {}
+
 /// JSValue has complex defined in C apis. we use here to identify the datatype only with dart
 /// class JSValue extends Struct {}
 
 /// JSRuntime *JS_NewRuntime(void);
 typedef newRuntimeFunc = Pointer<JSRuntime> Function();
 typedef newRuntimeNative = Pointer<JSRuntime> Function();
-final newRuntimeName = "JS_NewRuntime";
+final newRuntimeName = "newRuntime";
 final newRuntimeFunc newRuntime =
     dylib.lookup<NativeFunction<newRuntimeNative>>(newRuntimeName).asFunction();
 
@@ -97,13 +100,13 @@ final runGCFunc runGC = dylib.lookup<NativeFunction<runGCNative>>(runGCName).asF
 /// JSContext *JS_NewContext(JSRuntime *rt);
 typedef newContextFunc = Pointer<JSContext> Function(Pointer<JSRuntime> rt);
 typedef newContextNative = Pointer<JSContext> Function(Pointer<JSRuntime>);
-final newContextName = "JS_NewContext";
+final newContextName = "newContext";
 final newContextFunc newContext =
     dylib.lookup<NativeFunction<newContextNative>>(newContextName).asFunction();
 
 /// void JS_FreeContext(JSContext *s);
-typedef freeContextFunc = void Function(Pointer<JSRuntime> s);
-typedef freeContextNative = Void Function(Pointer<JSRuntime>);
+typedef freeContextFunc = void Function(Pointer<JSContext> s);
+typedef freeContextNative = Void Function(Pointer<JSContext>);
 final freeContextName = "JS_FreeContext";
 final freeContextFunc freeContext =
     dylib.lookup<NativeFunction<freeContextNative>>(freeContextName).asFunction();
@@ -271,7 +274,7 @@ final enableBignumExtFunc enableBignumExt =
     dylib.lookup<NativeFunction<enableBignumExtNative>>(enableBignumExtName).asFunction();
 
 /// JSValue *eval(JSContext *ctx, const char *input, size_t input_len);
-typedef evalFunc = Pointer Function(Pointer<JSContext> ctx, Pointer script, int thisObject);
+typedef evalFunc = Pointer Function(Pointer<JSContext> ctx, Pointer script, int length);
 typedef evalNative = Pointer Function(Pointer<JSContext> ctx, Pointer script, Int32 length);
 final evalName = "eval";
 

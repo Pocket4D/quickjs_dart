@@ -36,7 +36,7 @@ enum JSValueType {
 /// Because in `JSEngine` we have `JSContext` complete life-time management,
 /// and we don't want to pass `JSContext` and `Pointer` of `JSValue` as parameter everytime.
 
-class JSValue extends Object {
+class JSValue {
   Pointer _ptr;
   Pointer _ctx;
   bool _isFreed = false;

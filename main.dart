@@ -92,7 +92,7 @@ main() async {
   JSEngine.loop(engine);
 
   /// 5 .stop the engine, should be place to flutter widget's `dispose` method;
-  // JSEngine.stop(engine);
+  JSEngine.stop(engine);
 }
 
 testCallJS() async {
