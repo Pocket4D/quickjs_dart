@@ -1,3 +1,7 @@
+## 0.0.4
+* fix android build release
+* fix ios build release(real device)
+* KNOWN ISSUE: ios fat framework failed due to ios 14.0, fix later
 ## 0.0.3
 * reduce android minSdkVersion to 16
 * KNOWN ISSUE: ios build failed due to ios 14.0, fix later
