@@ -96,8 +96,8 @@ class JSEngine {
 
   void _registerDartFP() {
     final dartCallbackPointer = Pointer.fromFunction<
-        Pointer Function(Pointer<JSContext> ctx, Pointer thisVal, Int32 argc, Pointer argv,
-            Pointer funcData)>(callBackWrapper);
+        Pointer Function(Pointer<JSContext> ctx, Pointer thisVal, Int32 argc,
+            Pointer argv, Pointer funcData)>(callBackWrapper);
     registerDartCallbackFP(dartCallbackPointer);
   }
 
@@ -257,11 +257,12 @@ class JSEngine {
     }
     dartHandlerMap.putIfAbsent(handlerId, () => handler);
 
-    installDartHook(_ctx, toVal?.value ?? global.value, funcNameValue.value, handlerId);
+    installDartHook(
+        _ctx, toVal?.value ?? global.value, funcNameValue.value, handlerId);
   }
 
-  static Pointer callBackWrapper(
-      Pointer<JSContext> ctx, Pointer thisVal, int argc, Pointer argv, Pointer funcData) {
+  static Pointer callBackWrapper(Pointer<JSContext> ctx, Pointer thisVal,
+      int argc, Pointer argv, Pointer funcData) {
     final int handlerId = ffiValue.toInt64(ctx, funcData);
     final DartCHandler handler = dartHandlerMap[handlerId];
 
@@ -270,10 +271,9 @@ class JSEngine {
     }
 
     List<JSValue> _args = argc > 1
-        ? List.generate(argc, (index) => JSValue(ctx, getJSValueConstPointer(argv, index)))
-        : argc == 1
-            ? [JSValue(ctx, argv)]
-            : null;
+        ? List.generate(
+            argc, (index) => JSValue(ctx, getJSValueConstPointer(argv, index)))
+        : argc == 1 ? [JSValue(ctx, argv)] : null;
 
     JSValue _thisVal = JSValue(ctx, thisVal);
 
@@ -290,10 +290,15 @@ class JSEngine {
     }
   }
 
-  JSValue callFunction(JSValue jsFunction, JSValue thisVal, [List<JSValue> args]) {
+  JSValue callFunction(JSValue jsFunction, JSValue thisVal,
+      [List<JSValue> args]) {
     Map<String, dynamic> _paramsExecuted = paramsExecutor(args);
-    Pointer callResult = call(_ctx, jsFunction.value, thisVal.value,
-        (_paramsExecuted["length"] as int), (_paramsExecuted["value"]) as Pointer<Pointer>);
+    Pointer callResult = call(
+        _ctx,
+        jsFunction.value,
+        thisVal.value,
+        (_paramsExecuted["length"] as int),
+        (_paramsExecuted["value"]) as Pointer<Pointer>);
     return attachEngine(JSValue(_ctx, callResult));
   }
 

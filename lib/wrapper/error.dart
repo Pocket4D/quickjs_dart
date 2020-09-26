@@ -12,7 +12,8 @@ class QuickJSError {
     switch (_error) {
       case QuickJS_Errors.TypeError:
         {
-          _retString = ("$_common # JSValue TypeError, message: type is $_message");
+          _retString =
+              ("$_common # JSValue TypeError, message: type is $_message");
           break;
         }
     }

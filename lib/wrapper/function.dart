@@ -5,9 +5,11 @@ import '../bindings/ffi_base.dart';
 import 'value.dart';
 import 'engine.dart';
 
-typedef DartCHandler = Function({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
+typedef DartCHandler = Function(
+    {Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
 
-typedef DartFunctionHandler = Function(List<JSValue> args, JSEngine engine, JSValue thisVal);
+typedef DartFunctionHandler = Function(
+    List<JSValue> args, JSEngine engine, JSValue thisVal);
 
 // ignore: camel_case_types
 abstract class DartCallbackClass {
@@ -20,13 +22,16 @@ abstract class DartCallbackClass {
 
   DartCallbackClass(this.engine, this.name, this.handler);
 
-  wrapperFunc({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
+  wrapperFunc(
+      {Pointer<JSContext> context, JSValue thisVal, List<JSValue> args});
 }
 
 class DartCallback implements DartCallbackClass {
-  DartCallback({@required this.engine, @required this.name, @required this.handler});
+  DartCallback(
+      {@required this.engine, @required this.name, @required this.handler});
 
-  Pointer wrapperFunc({Pointer<JSContext> context, JSValue thisVal, List<JSValue> args}) {
+  Pointer wrapperFunc(
+      {Pointer<JSContext> context, JSValue thisVal, List<JSValue> args}) {
     try {
       // List _dartArgs =
       //     args != null ? args.map((element) => engine.fromJSVal(element)).toList() : null;
@@ -45,12 +50,17 @@ class DartCallback implements DartCallbackClass {
         }
         var newPromise = engine.globalPromise.callJS(null);
         handlerResult.then((value) {
-          newPromise.getProperty("resolve").callJS(
-              [(value is JSValue) ? dupValue(engine.context, value.value) : engine.toJSVal(value)]);
+          newPromise.getProperty("resolve").callJS([
+            (value is JSValue)
+                ? dupValue(engine.context, value.value)
+                : engine.toJSVal(value)
+          ]);
           newPromise.free();
           JSEngine.loop(engine);
         }).catchError((e) {
-          newPromise.getProperty("reject").callJS([engine.newString(e.toString())]);
+          newPromise
+              .getProperty("reject")
+              .callJS([engine.newString(e.toString())]);
           newPromise.free();
           JSEngine.loop(engine);
         });

@@ -1,5 +1,5 @@
 name: quickjs_dart
-description: A dart binding and JSEngine for QuickJS, using Dart:FFI
+description: A dart binding and JSEngine for QuickJS, using Dart:FFI. DartVM can run JSEngine now, supporting Android currently, will support more platform sool
 version: 0.0.4
 homepage: 'https://github.com/Pocket4D/quickjs_dart'
 

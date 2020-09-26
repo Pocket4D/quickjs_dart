@@ -47,8 +47,9 @@ class JSValue {
   Pointer get value => _ptr;
   int get valueTag => ffiValue.getValueTag(_ptr);
   JSValueType get valueType => _getValueType();
-  JSValue get console =>
-      JSValue(_ctx, getGlobalObject(_ctx)).getProperty("console").getProperty("log");
+  JSValue get console => JSValue(_ctx, getGlobalObject(_ctx))
+      .getProperty("console")
+      .getProperty("log");
 
   JSValue(this._ctx, this._ptr, {this.engine});
 
@@ -77,7 +78,11 @@ class JSValue {
   /// ```
   void setPropertyValue(String propertyName, JSValue value, int flags) {
     setPropertyInternal(
-        _ctx, _ptr, ffiValue.newAtom(_ctx, Utf8Fix.toUtf8(propertyName)), value.value, flags);
+        _ctx,
+        _ptr,
+        ffiValue.newAtom(_ctx, Utf8Fix.toUtf8(propertyName)),
+        value.value,
+        flags);
   }
 
   void setProperty(dynamic propName, JSValue value, {int flags}) {
@@ -87,11 +92,13 @@ class JSValue {
     } else {
       _propName = JSValue.newString(_ctx, propName.toString());
     }
-    setProp(_ctx, _ptr, _propName.value, value.value, flags ?? JSFlags.JS_PROP_THROW);
+    setProp(_ctx, _ptr, _propName.value, value.value,
+        flags ?? JSFlags.JS_PROP_THROW);
   }
 
   JSValueType _getValueType() {
-    var typeString = toDartStringVal(_ctx, ffiValue.atomToString(_ctx, operTypeof(_ctx, _ptr)));
+    var typeString = toDartStringVal(
+        _ctx, ffiValue.atomToString(_ctx, operTypeof(_ctx, _ptr)));
     switch (typeString) {
       case 'number':
         return JSValueType.NUMBER;
@@ -175,13 +182,15 @@ class JSValue {
         List<int> paramsIntList = toArray(jsonEncode(params));
 
         // allocate with json string
-        final Pointer<Uint8> pointer = allocate<Uint8>(count: paramsIntList.length);
+        final Pointer<Uint8> pointer =
+            allocate<Uint8>(count: paramsIntList.length);
 
         // set pointer value to array value
         for (int j = 0; j < paramsIntList.length; ++j) {
           pointer[j] = paramsIntList[j];
         }
-        var jsArrayBuf = newArrayBufferCopy(_ctx, pointer, paramsIntList.length);
+        var jsArrayBuf =
+            newArrayBufferCopy(_ctx, pointer, paramsIntList.length);
         // call js object with params
         JSValue argv = JSValue(_ctx, jsArrayBuf);
         argvs[i] = argv;
@@ -503,7 +512,8 @@ class JSValue {
     if (prependString == null) {
       return console.callJS([value ?? this]);
     }
-    return console.callJS([JSValue.newString(_ctx, prependMessage), value ?? this]);
+    return console
+        .callJS([JSValue.newString(_ctx, prependMessage), value ?? this]);
   }
 
   void dispose() {

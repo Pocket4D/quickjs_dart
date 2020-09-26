@@ -56,7 +56,9 @@ class PrefixPrinter extends LogPrinter {
   final LogPrinter _realPrinter;
   Map<Level, String> _prefixMap;
 
-  PrefixPrinter(this._realPrinter, {debug, verbose, wtf, info, warning, error, nothing}) : super() {
+  PrefixPrinter(this._realPrinter,
+      {debug, verbose, wtf, info, warning, error, nothing})
+      : super() {
     _prefixMap = {
       Level.debug: debug ?? '  DEBUG ',
       Level.verbose: verbose ?? 'VERBOSE ',
@@ -70,13 +72,17 @@ class PrefixPrinter extends LogPrinter {
 
   @override
   List<String> log(LogEvent event) {
-    return _realPrinter.log(event).map((s) => '${_prefixMap[event.level]}$s').toList();
+    return _realPrinter
+        .log(event)
+        .map((s) => '${_prefixMap[event.level]}$s')
+        .toList();
   }
 }
 
 Logger logger = Logger(
   printer: PrefixPrinter(HybridPrinter(
-      PrettyPrinter(methodCount: 0, colors: false, printTime: true, printEmojis: true),
+      PrettyPrinter(
+          methodCount: 0, colors: false, printTime: true, printEmojis: true),
       debug: SimplePrinter())), //OneLinePrinter(),
 );
 
