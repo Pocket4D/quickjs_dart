@@ -1,3 +1,5 @@
+## 0.0.5
+* try combine ios fat framework
 ## 0.0.4
 * fix android build release
 * fix ios build release(real device)
